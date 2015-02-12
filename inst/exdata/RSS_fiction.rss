@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0">
+
+<channel>
+  <title>Amandas Blog</title>
+  <link>http://www.amanda/mydailylife.to</link>
+  <description>John Doe's favourite crush tells about her life</description>
+  <item>
+    <title>Rihannas Pet Vlog</title>
+    <link>http://www.rihanna/puppyfun.kg</link>
+    <description>John Doe's number two shows funny animal videos </description>
+  </item>
+  <item>
+    <title>Amazon</title>
+    <link>http://amazon.com</link>
+    <description> Where John Doe orders over night presents for 
+                  last minute dates </description>
+  </item>
+</channel>
+
+</rss>

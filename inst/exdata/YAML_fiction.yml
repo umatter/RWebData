@@ -1,0 +1,59 @@
+# title: "John Doe's accounting framework of romantic relationships"
+
+--- 
+date: !!timestamp 2014-08-05
+
+loveBalance:  
+
+  potentialWives: 
+    &bl blondes: 
+      one: 
+        - name: > 
+            Amanda Zaragosa 
+            Emilia van Huygens
+        - wealthy: !!bool false
+        - gradeFirstDate: 8
+      two: 
+        name: Rihanna
+        wealthy: true
+        gradeFirstDate: .63e+01
+    non-blondes:
+      one:
+        name: Adisa
+        wealthy: ~, 
+        gradeFirstDate: Infinity
+      two:
+        name: Ingrid
+        wealthy: |
+          true
+          she is a chinless wonder
+        gradeFirstDate: -Infinity
+        nickname: Awkward
+
+  justFriends: 
+    *bl: ~
+    non-blondes: 
+      one: 
+        name: {
+          codename: 
+           'Sabrina "the Insolent"',
+          real: ~
+        }
+        wealthy: maybe
+        gradeFirstDate: 
+          either:  "8 or 9"          
+          decided: "no"
+
+  dontKnow:
+    --- !!set
+      ? Petra
+      ? Ezra
+      ? Paul
+
+loveCriteria: 
+  !!omap
+    - looks: 1
+    - character: 2
+    - looks: 3 # yes i am shallow
+    - cute accent: 4
+    - no mustache: .NaN

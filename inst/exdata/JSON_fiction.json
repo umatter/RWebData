@@ -1,0 +1,57 @@
+{
+    "loveBalance": [
+        {
+            "title": "John Doe's accounting framework of romantic relationships",
+            "is there a way to handle this information as a comment and not data?": "unfortunately not"
+        },
+        {
+            "potentialWives": {
+                "blondes": [
+                    {
+                        "name": "Amanda",
+                        "wealthy": false,
+                        "gradeFirstDate": 8
+                    },
+                    {
+                        "name": "Rihanna",
+                        "wealthy": true,
+                        "gradeFirstDate": 6.3
+                    }
+                ],
+                "non-blondes": [
+                    {
+                        "name": "Adisa",
+                        "wealthy": null,
+                        "gradeFirstDate": "Inf"
+                    },
+                    {
+                        "name": "Ingrid",
+                        "wealthy": true,
+                        "gradeFirstDate": "-Inf",
+                        "nickname": "Awkward"
+                    }
+                ]
+            },
+            "justFriends": {
+                "blondes": [],
+                "non-blondes": [
+                    {
+                        "name": {
+                            "real": null,
+                            "codename": "Sabrina"
+                        },
+                        "wealthy": "maybe",
+                        "gradeFirstDate": [
+                            {
+                                "either": "8 or 9"
+                            },
+                            {
+                                "decided": "no"
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

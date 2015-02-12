@@ -1,0 +1,65 @@
+# 
+# ' Basic HTTP GET request to a web API
+# ' 
+# ' Sends GET requests to an API based on an apirequest object and handles the response. (wrapped around RCurl::getURL).
+# ' @usage apiGET(x)
+# ' @param x an apirequest object
+# ' @return an apiresp-object containing the response
+# ' @examples
+# ' # First, make sure the necessary API key is saved in your R session:
+# ' # (This example is based on the Project Vote Smart API [PVS API])
+# ' saveAPIkey(key.var="pvs", key="YOUR-KEY-HERE")
+# ' # first create a request function:
+# ' pvsmeasure <- "http://api.votesmart.org/Measure.getMeasure?"}
+# ' measureparameters <- data.frame(parameter="measureId", value=NA)}
+# ' getMeasureRequest <- apiRequestFunction(x=measureparameters, base.url=pvsmeasure,key.param="key",key.object="pvs")
+# ' mr <- getMeasureRequest(measureId=1632) # create a request object
+# ' # get some data from the PVS API...
+# ' \dontrun{apiresponse <- apiGET(mr) # only works with a proper PVS API key}
+
+
+apiGET <-
+function(x) {
+    stopifnot(is.apirequest(x))
+
+    url <- x@URL
+    
+    hf <- basicHeaderGatherer()
+    body  <- try(getURL(url, headerfunction=hf$update, useragent="RCurl-RwebAPI",
+                     .opts=curlOptions(followlocation=TRUE)), silent=TRUE)
+    
+    # Error handling in case of unexpected binary response:
+    if (class(body)=="try-error"){
+      
+      if (grepl("embedded nul in string", attributes(body)$condition )){
+        
+        # save binary data temporarily to decompress and read body
+        bin <- getBinaryURL(url, headerfunction=hf$update, useragent="RCurl-RwebAPI")
+        temp <- tempfile()
+        con <- file(temp, open = "wb")
+        writeBin(bin, con)
+        close(con)
+        body <- paste(readLines(temp, warn=FALSE), collapse="")
+        unlink(temp)
+        
+      } else {
+        body <- getURLContent(url, headerfunction=hf$update, useragent="RCurl-RwebAPI",
+                                    .opts=curlOptions(followlocation=TRUE)) 
+      }  
+    }
+        
+    header <- hf$value() # for optional use in further functions
+    type <- header["Content-Type"]
+    statusMessage <- header["statusMessage"]
+    
+    resp <- new("apiresp", 
+                body=body,
+                header=header,
+                type=type, 
+                statusMessage=statusMessage, 
+                request.arguments=x@request.arguments,
+                nodefault.parameters=x@nodefault.parameters)
+    
+    return(resp)
+    
+  }

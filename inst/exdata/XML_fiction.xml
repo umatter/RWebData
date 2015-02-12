@@ -1,0 +1,51 @@
+<?xml version="1.1" encoding="UTF-8" ?>
+
+<loveBalance title = "John Doe's accounting framework of romantic relationships"
+             is.there.a.way.to.handle.this.information.as.a.comment.and.not.data = 
+             "yes, but instead we implemented it as attributes">
+
+	<potentialWives>
+		<blondes>
+			<one>
+				<name> Amanda </name>
+				<wealthy> FALSE </wealthy>
+				<gradeFirstDate> 8 </gradeFirstDate>
+			</one>		
+			<two>
+				<name> Rihanna </name>
+				<wealthy> TRUE </wealthy>
+				<gradeFirstDate> 6.3 </gradeFirstDate>
+			</two>
+		</blondes>
+		<non-blondes>
+			<one>
+				<name> Adisa </name>
+				<wealthy />
+				<gradeFirstDate> Inf </gradeFirstDate>
+			</one>		
+			<two>
+				<name> Ingrid </name>
+				<wealthy> TRUE </wealthy>
+				<gradeFirstDate> -Inf </gradeFirstDate>
+				<nickname> Awkward </nickname>
+			</two>		
+		</non-blondes>
+	</potentialWives>
+	<justFriends>
+		<blondes />
+		<non-blondes>
+			<one>
+				<name> 
+					<real />
+					<codename> Sabrina </codename>
+				</name>
+				<wealthy> maybe </wealthy>
+				<gradeFirstDate>
+					<either> 8 or 9 </either>
+					<decided> no </decided>
+				</gradeFirstDate>
+			</one>
+		</non-blondes>
+	</justFriends>
+</loveBalance>
+
