@@ -51,9 +51,7 @@ function(x, shortnames=FALSE, method="RwebAPI") {
         flatdata <- auto.tree2flat(nestedlistdata)
         flatdata <- lapply(flatdata, cbindFill, inputargs )
         flatdata <- lapply(flatdata, cleanFlatdata)
-      }
-      
-      if (method=="XML2R" & grepl(pattern="xml", apiresp@type)){
+      } else if (method=="XML2R" & grepl(pattern="xml", apiresp@type)){
         flatdata <- xml2r(apiresp@body)
         flatdata <- lapply(flatdata, cbindFill, inputargs )
         flatdata <- lapply(flatdata, cleanFlatdata)
