@@ -1,24 +1,24 @@
-# 
-# ' Transform tree-structured data into flat representation
-# ' 
-# ' Transforms a nested list representing tree structured data into one or several data frames
-# ' @usage tree2flat(x, id)
-# ' @param x a (nested list) representing tree structured data from an API response (originally JSON or XML).
-# ' @param id the id-variable to separate individual observations in x, a character string.
-# ' @return a list containing one or several data frame(s)
-# ' @examples
-# ' # First, make sure the necessary API key is saved in your R session:
-# ' # (This example is based on the Project Vote Smart API [PVS API])
-# ' saveAPIkey(key.var="pvs", key="YOUR-KEY-HERE")
-# ' # first create a request function:
-# ' pvsmeasure <- "http://api.votesmart.org/Measure.getMeasure?"}
-# ' measureparameters <- data.frame(parameter="measureId", value=NA)}
-# ' getMeasureRequest <- apiRequestFunction(x=measureparameters, base.url=pvsmeasure,key.param="key",key.object="pvs")
-# ' # get some data from the PVS API...
-# ' mr <- getMeasureRequest(measureId=1632) # create a request object
-# ' \dontrun{x <- apiGET(mr)}
-# ' \dontrun{x.list <- content2list(x)}
-# ' \dontrun{x.df <- tree2flat(x.list, id="measureId")}
+##
+##' Transform tree-structured data into flat representation
+##' 
+##' Transforms a nested list representing tree structured data into one or several data frames
+##' @usage tree2flat(x, id)
+##' @param x a (nested list) representing tree structured data from an API response (originally JSON or XML).
+##' @param id the id-variable to separate individual observations in x, a character string.
+##' @return a list containing one or several data frame(s)
+##' @examples
+##' # First, make sure the necessary API key is saved in your R session:
+##' # (This example is based on the Project Vote Smart API [PVS API])
+##' saveAPIkey(key.var="pvs", key="YOUR-KEY-HERE")
+##' # first create a request function:
+##' pvsmeasure <- "http://api.votesmart.org/Measure.getMeasure?"}
+##' measureparameters <- data.frame(parameter="measureId", value=NA)}
+##' getMeasureRequest <- apiRequestFunction(x=measureparameters, base.url=pvsmeasure,key.param="key",key.object="pvs")
+##' # get some data from the PVS API...
+##' mr <- getMeasureRequest(measureId=1632) # create a request object
+##' \dontrun{x <- apiGET(mr)}
+##' \dontrun{x.list <- content2list(x)}
+##' \dontrun{x.df <- tree2flat(x.list, id="measureId")}
 
 
 tree2flat <-

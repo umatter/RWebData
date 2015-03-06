@@ -1,21 +1,20 @@
-# 
-# ' Basic HTTP GET request to a web API
-# ' 
-# ' Sends GET requests to an API based on an apirequest object and handles the response. (wrapped around RCurl::getURL).
-# ' @usage apiGET(x)
-# ' @param x an apirequest object
-# ' @return an apiresp-object containing the response
-# ' @examples
-# ' # First, make sure the necessary API key is saved in your R session:
-# ' # (This example is based on the Project Vote Smart API [PVS API])
-# ' saveAPIkey(key.var="pvs", key="YOUR-KEY-HERE")
-# ' # first create a request function:
-# ' pvsmeasure <- "http://api.votesmart.org/Measure.getMeasure?"}
-# ' measureparameters <- data.frame(parameter="measureId", value=NA)}
-# ' getMeasureRequest <- apiRequestFunction(x=measureparameters, base.url=pvsmeasure,key.param="key",key.object="pvs")
-# ' mr <- getMeasureRequest(measureId=1632) # create a request object
-# ' # get some data from the PVS API...
-# ' \dontrun{apiresponse <- apiGET(mr) # only works with a proper PVS API key}
+##' Basic HTTP GET request to a web API
+##' 
+##' Sends GET requests to an API based on an apirequest object and handles the response. (wrapped around RCurl::getURL).
+##' @usage apiGET(x)
+##' @param x an apirequest object
+##' @return an apiresp-object containing the response
+##' @examples
+##' # First, make sure the necessary API key is saved in your R session:
+##' # (This example is based on the Project Vote Smart API [PVS API])
+##' saveAPIkey(key.var="pvs", key="YOUR-KEY-HERE")
+##' # first create a request function:
+##' pvsmeasure <- "http://api.votesmart.org/Measure.getMeasure?"}
+##' measureparameters <- data.frame(parameter="measureId", value=NA)}
+##' getMeasureRequest <- apiRequestFunction(x=measureparameters, base.url=pvsmeasure,key.param="key",key.object="pvs")
+##' mr <- getMeasureRequest(measureId=1632) # create a request object
+##' # get some data from the PVS API...
+##' \dontrun{apiresponse <- apiGET(mr) # only works with a proper PVS API key}
 
 
 apiGET <-

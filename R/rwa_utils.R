@@ -5,20 +5,19 @@
 
 xml2r <- 
   function(x) {
-    
-    # from XML2R::urlsToDocs
-    x.doc <- try_default(xmlParse(x, asText = TRUE), 
-                       NULL, quiet = TRUE)
-    
-    x.nodes <- docsToNodes(list(x.doc), "/")
-    x.list <- nodesToList(x.nodes)
-    x.obs <- listsToObs(x.list, "1")
-    x.flat <- collapse_obs(x.obs)
-    x.flat.df <- lapply(x.flat, as.data.frame, stringsAsFactors=FALSE)
-    
-    return(x.flat.df)
-    
+        # from XML2R::urlsToDocs
+        x.doc <- try_default(xmlParse(x, asText = TRUE), 
+                             NULL, quiet = TRUE)
+        
+        x.nodes <- docsToNodes(list(x.doc), "/")
+        x.list <- nodesToList(x.nodes)
+        x.obs <- listsToObs(x.list, "1")
+        x.flat <- collapse_obs(x.obs)
+        x.flat.df <- lapply(x.flat, as.data.frame, stringsAsFactors=FALSE)
+        
+        return(x.flat.df)
   }
+
 
 #----------------------------------
 # flatten nested data frames
@@ -26,36 +25,35 @@ xml2r <-
 # more data frames in one or several columns
 #----------------------------------
 
-
-
 flatDF <-
   function(x){
-    stopifnot(is.data.frame(x))
+        stopifnot(is.data.frame(x))
+        
+        cols <- names(x)
+        colclasses <- unlist(lapply(cols, function(i){class(x[,i])=="list"}))
+        
+        if (any(colclasses)) {
+              
+              x.sub <- x[colclasses]
+              subclasses <- unlist(lapply(names(x.sub), function(i){class(x.sub[,i][[1]])}))
+              nesteddfs <- subclasses=="data.frame"
+              x.nesteddfs <- x.sub[nesteddfs]
+              
+              flat.list <- lapply(names(x.nesteddfs), FUN=function(i){
+                    df.i <- dfList(x.nesteddfs[,i])
+              })
+              
+              names(flat.list) <- names(x.nesteddfs)
+              
+              x.df <- x[, !(names(x) %in% names(flat.list))]
+              x.list <- c(list(root=x.df), flat.list ) # add clean part to list
+              
+              return(x.list)
+              
+        } else {
+              return(x)
+        }
     
-    cols <- names(x)
-    colclasses <- unlist(lapply(cols, function(i){class(x[,i])=="list"}))
-
-    if (any(colclasses)) {
-      
-      x.sub <- x[colclasses]
-      subclasses <- unlist(lapply(names(x.sub), function(i){class(x.sub[,i][[1]])}))
-      nesteddfs <- subclasses=="data.frame"
-      x.nesteddfs <- x.sub[nesteddfs]
-      
-      flat.list <- lapply(names(x.nesteddfs), FUN=function(i){
-        df.i <- dfList(x.nesteddfs[,i])
-      })
-      
-      names(flat.list) <- names(x.nesteddfs)
-      
-      x.df <- x[, !(names(x) %in% names(flat.list))]
-      x.list <- c(list(root=x.df), flat.list ) # add clean part to list
-      
-      return(x.list)
-      
-      } else {
-      return(x)
-    }
   }
 
 
@@ -386,15 +384,13 @@ onlyLeafnames <-
 
 cleanNodenames <- 
   function(x) {
-    
-    xn <- names(x)
-    xn <- sub(pattern="\\.{2,}", replacement="", x=xn) # remove double edges ("..")
-    xn <- sub(pattern="\\.$", replacement="", x=xn) # remove edge without node to follow ("asdf.")
-    
-    names(x) <- xn
-    
-    return(x)
-    
+        xn <- names(x)
+        xn <- sub(pattern="\\.{2,}", replacement="", x=xn) # remove double edges ("..")
+        xn <- sub(pattern="\\.$", replacement="", x=xn) # remove edge without node to follow ("asdf.")
+        
+        names(x) <- xn
+        
+        return(x)
   }
 
 
@@ -409,26 +405,20 @@ cleanNodenames <-
 
 getNodes <- 
   function(x, by="leafnames", match) {
-    
-    if (by=="leafnames") {
-      
-      l<- getLeafname(x)
-      
-      xmatch <- x[ l %in% match]
-      
-      return(xmatch) 
-    }
-    
-    if (by=="branch") {
-      
-      b<- getParentname(x)
-      
-      xmatch <- x[ b %in% match]
-      
-      return(xmatch) 
-    }
-    
-    
+        if (by=="leafnames") {
+              
+              l<- getLeafname(x)
+              xmatch <- x[ l %in% match]
+              
+              return(xmatch)
+        }
+        
+        if (by=="branch") {
+              b<- getParentname(x)
+              xmatch <- x[ b %in% match]
+              
+              return(xmatch) 
+        }
   }
 
 
@@ -440,14 +430,12 @@ getNodes <-
 
 getLeafname <- 
   function(nodename, pattern="."){
-    
-    stopifnot(is.character(nodename))
-    
-    leafname <- str_after(nodename, pattern=pattern)
-    
-    return(leafname)
-    
+        stopifnot(is.character(nodename))
+        
+        leafname <- str_after(nodename, pattern=pattern)
+        return(leafname)
   }
+
 
 #-------------------------
 # getSiblingname(x)
@@ -458,25 +446,20 @@ getLeafname <-
 
 getSiblingname <- 
   function(x, nodename){
-    
-    stopifnot(is.character(nodename), is.character(x))
-    
-    parent <- getParentname(nodename)
-    leaf <- getLeafname(nodename)
-    
-    if (leaf==parent){# no parent? --> no siblings --> return empty
-      
-      return("")
-      
-    }
-    
-    #siblings <- str_match_all(string=x, pattern=parent )
-    
-    siblings <- grep(pattern=parent, x=x, value=TRUE, fixed=TRUE)
-    siblings2 <- siblings[!grepl(pattern=leaf, x=siblings, fixed=TRUE)] # only siblings, not node itself
-    
-    return(siblings2)
-    
+        stopifnot(is.character(nodename), is.character(x))
+        
+        parent <- getParentname(nodename)
+        leaf <- getLeafname(nodename)
+        
+        if (leaf==parent){# no parent? --> no siblings --> return empty
+              return("")
+        }
+        
+        #siblings <- str_match_all(string=x, pattern=parent )
+        siblings <- grep(pattern=parent, x=x, value=TRUE, fixed=TRUE)
+        siblings2 <- siblings[!grepl(pattern=leaf, x=siblings, fixed=TRUE)] # only siblings, not node itself
+        
+        return(siblings2)
   }
 
 
@@ -531,7 +514,6 @@ getParentname <-
   }
 
 
-# TEST THE NEW CHANGES!!
 #-------------------------
 # another alternative to simplify
 # x a vector or data frame representing tree structured data
@@ -751,29 +733,33 @@ uniqueNodenames <-
 # NOTE: NOT VERY EFFICIENT, TEST WHETHER CHANGE TO USING VECTORS AS FLAT REPRESENTATION IS IMPROVING THIS.
 #--------------------------
 
-simplifyTree <- function(x) {
+simplifyTree <- 
+      function(x) {
+            leafsequence <- detectLeafSequence(names(x)) # get the indices of the starting end ending point of repeated leaf sequences on the lowest level of the hierarchy
+            
+            if (length(leafsequence)>1) { # is there a leaf sequence? simplify the tree accordingly
+                  
+                  seqfirst <- leafsequence[1]
+                  seqlast <- leafsequence[length(leafsequence)]
+                  
+                  # 1) check whether sequence has a break
+                  in_increment <- leafsequence[2] - seqfirst
+                  sim_sequence <- seq(from=seqfirst, by=in_increment, along.with=leafsequence)
+                  sim_sequence[length(sim_sequence)] <- (sim_sequence[length(sim_sequence)]-1) # set the last index to the last index of the sequence, not the beginning of the next sequence
+                  stopifnot(sim_sequence==leafsequence) # add error handling here...
+                  
+                  # 2) remove the parent nodes of all leafs in the sequence 
+                  #    (this should be sufficient if wrappers have been removed before)
+                  x_leafsequence <- x[,seqfirst:seqlast]
+                  parentslevel <- max(nLevels(names(x))) # the parents level is the max level of leafs in the lowest hierarchy according to nLevels (counts first level as 0; see nLevels())
+                  x_leafsequence <- removeLevelnodename(x=x_leafsequence, level=parentslevel)
+                  names(x)[seqfirst:seqlast] <- names(x_leafsequence)
+                  
+            } 
+      
   
   
-  leafsequence <- detectLeafSequence(names(x)) # get the indices of the starting end ending point of repeated leaf sequences on the lowest level of the hierarchy
-  
-  if (length(leafsequence)>1) { # is there a leaf sequence? simplify the tree accordingly
-    
-    seqfirst <- leafsequence[1]
-    seqlast <- leafsequence[length(leafsequence)]
-    
-    # 1) check whether sequence has a break
-    in_increment <- leafsequence[2] - seqfirst
-    sim_sequence <- seq(from=seqfirst, by=in_increment, along.with=leafsequence)
-    sim_sequence[length(sim_sequence)] <- (sim_sequence[length(sim_sequence)]-1) # set the last index to the last index of the sequence, not the beginning of the next sequence
-    stopifnot(sim_sequence==leafsequence) # add error handling here...
-    
-    # 2) remove the parent nodes of all leafs in the sequence (this should be sufficient if wrappers have been removed before)
-    x_leafsequence <- x[,seqfirst:seqlast]
-    parentslevel <- max(nLevels(names(x))) # the parents level is the max level of leafs in the lowest hierarchy according to nLevels (counts first level as 0; see nLevels())
-    x_leafsequence <- removeLevelnodename(x=x_leafsequence, level=parentslevel)
-    names(x)[seqfirst:seqlast] <- names(x_leafsequence)
-    
-  } 
+
   
   return(x)
   

@@ -1,9 +1,11 @@
 ##' Query data from an API
 ##' 
-##'  A high-level function that automates the querying and extraction of data from a web API. Unlike apiData(), only the pure data is returned.
+##'  A high-level function that automates the querying and extraction of data from a web API. Unlike
+##'  apiData(), only the pure data is returned.
 ##' @usage apiDatalight(x, ...)
 ##' @param x an apirequest object
-##' @param ... currently only one parameter (simplify) passed down to the mapping algorithm if simplify is TRUE, the document tree is made simpler if possible (by removing unnecessary nodes)
+##' @param ... currently only one parameter (simplify) passed down to the mapping algorithm if 
+##' simplify is TRUE, the document tree is made simpler if possible (by removing unnecessary nodes)
 ##' @return a list containing the returned data in a flat representation
 ##' @export
 ##' @examples
@@ -15,7 +17,8 @@ apiDatalight <-
 function(x,  ...) {
     stopifnot((is.apirequest(x) | is.character(x)))
     
-    if (is.character(x)) {x <- url2apirequest(x)}
+    if (is.character(x)) {
+          x <- url2apirequest(x)}
     
     # extract request arguments to merge with returned data (in order to facilitate joining different
     # resulting data frames later on)  

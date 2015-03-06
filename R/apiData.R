@@ -3,7 +3,8 @@
 ##'  A high-level function that automates the querying and extraction of data from a web API.
 ##' @usage apiData(x, shortnames=FALSE)
 ##' @param x an apirequest object
-##' @param shortnames logical, indicating whether the resulting tables (data frames) should have short variable names (default is FALSE, variable names contain nesting hierarchy)
+##' @param shortnames logical, indicating whether the resulting tables (data frames) should have 
+##' short variable names (default is FALSE, variable names contain nesting hierarchy)
 ##' @param method character, either "RwebAPI", "jsonlite", or "XML2R"
 ##' @return an apidata-object containing the returned data in a flat representation
 ##' @export
@@ -17,7 +18,8 @@ function(x, shortnames=FALSE, method="RwebAPI") {
               (method=="RwebAPI" | method=="XML2R" | method=="jsonlite")
                )
     
-    if (is.character(x)) {x <- url2apirequest(x)}
+    if (is.character(x)) {
+          x <- url2apirequest(x)}
     
     # extract request arguments to merge with returned data (in order to facilitate joining different
     # resulting data frames later on)  

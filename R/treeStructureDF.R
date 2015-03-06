@@ -1,21 +1,27 @@
-# ' Describe tree-structured data
-# ' 
-# '  Returns a data frame describing the structure of tree structured data with rows for each data value (leaf) and columns for each node-level.
-# ' @usage treeStructureDF(x, check.nodenames=FALSE)
-# ' @param x either a nested list, a named character vector, or a data frame with one row representing tree-structured data
-# ' @param check.nodenames logical, indicating whether potentially ambigious nodenames should be changed (default is FALSE; see details for more info)
-# ' @return a data frame describing the structure of tree structured data with rows for each data value (leaf) and columns for each node-level.
-# ' @details If check.nodenames=TRUE, the function attempts to change the names of child nodes that either also show up as parent nodes higher in the hierarchy or show up as children of other parent nodes on the same hierarchy level.
-# ' @examples
-# ' f <-  system.file("exampleData", "catalog.xml",  package = "XML") # from package XML
-# ' doc  <-  xmlInternalTreeParse(f)
-# ' xlist <- xmlToList(doc)
-# ' xdf <- flattenTree(xlist)
-# ' xch <- as.character(t(xdf))
-# ' names(xch) <- names(xdf)
-# ' treeStructureDF(xdf)
-# ' treeStructureDF(xlist)
-# ' treeStructureDF(xch)
+##' Describe tree-structured data
+##' 
+##'  Returns a data frame describing the structure of tree structured data with rows for each data
+##'  value (leaf) and columns for each node-level.
+##' @usage treeStructureDF(x, check.nodenames=FALSE)
+##' @param x either a nested list, a named character vector, or a data frame with one row
+##' representing tree-structured data
+##' @param check.nodenames logical, indicating whether potentially ambigious nodenames should be
+##' changed (default is FALSE; see details for more info)
+##' @return a data frame describing the structure of tree structured data with rows for each data
+##' value (leaf) and columns for each node-level.
+##' @details If check.nodenames=TRUE, the function attempts to change the names of child nodes
+##' that either also show up as parent nodes higher in the hierarchy or show up as children of
+##' other parent nodes on the same hierarchy level.
+##' @examples
+##' f <-  system.file("exampleData", "catalog.xml",  package = "XML") # from package XML
+##' doc  <-  xmlInternalTreeParse(f)
+##' xlist <- xmlToList(doc)
+##' xdf <- flattenTree(xlist)
+##' xch <- as.character(t(xdf))
+##' names(xch) <- names(xdf)
+##' treeStructureDF(xdf)
+##' treeStructureDF(xlist)
+##' treeStructureDF(xch)
 
 
 treeStructureDF <-
@@ -23,10 +29,14 @@ function(x, check.nodenames=FALSE) {
     
     stopifnot((is.data.frame(x) & nrow(x)==1) | is.character(x) | is.list(x))
     
-    if (is.list(x)) { x <- flattenTree(x) }
+    if (is.list(x)) {
+          x <- flattenTree(x)
+    }
         
     xnames <- names(x)
-    if(is.null(xnames)) {return(NULL)}
+    if (is.null(xnames)) {
+          return(NULL)
+    }
     
     nsep <- strsplit(xnames, split=".", fixed=TRUE)
     nsep <- lapply(nsep, FUN=function(i){
@@ -54,7 +64,6 @@ function(x, check.nodenames=FALSE) {
 
     if (check.nodenames==TRUE){     # Check whether same nodes occur on different levels, add parent name to duplicated node names to avoid ambiguity (especially with respect to visualization)
       # NOTE: THIS STEP MIGHT INTERFERE WITH THE EXTRACTION ALGORITHMS: MAKE SURE ALL DEPENDING FUNCTIONS STILL WORK!
-      
       
       for (i in (length(nodes.df)-1):2) {
         

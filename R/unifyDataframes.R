@@ -1,30 +1,30 @@
-# NEEDS TO BE IMPROVED!! --> ID/PATH ASPECT
-# ' Unify division of variables between several tables
-# ' 
-# ' Given a list of data frames (as a result of several requests processed with 
-# ' apiDownload()) describing the same observations, the function attempts to 
-# ' unify the data frames by distributing variables that show up in both the 
-# ' root data frame and other data frames to their respective data frame.
-# ' 
-# ' @usage unifyDataframes(x, rootname="root")
-# ' @param x a list of data frames
-# ' @param rootname character, indicating the name of the root data frame
-# ' @return a list containing one or several data frame(s)
-# ' @examples
-# ' root <- data.frame(firmname=c("microdata", "bigdata"), 
-# '                       path=c("x1","x2"),
-# '                       employees.name=c(NA,"john"))
-# '                       
-# ' products <- data.frame(products.productname=c("a","b","c","d"),
-# '                           path=c("x1", "x1", "x2", "x2"))
-# '                           
-# ' employees <- data.frame(employees.name=c("sarah", "max"),
-# '                         path=c("x1","x1"))
-# '                         
-# ' xlist <- list(root=root, products=products, employees=employees)
-# ' 
-# ' unifyDataframes(xlist)
-# ' 
+##NEEDS TO BE IMPROVED!! --> ID/PATH ASPECT
+##' Unify division of variables between several tables
+##' 
+##' Given a list of data frames (as a result of several requests processed with 
+##' apiDownload()) describing the same observations, the function attempts to 
+##' unify the data frames by distributing variables that show up in both the 
+##' root data frame and other data frames to their respective data frame.
+##' 
+##' @usage unifyDataframes(x, rootname="root")
+##' @param x a list of data frames
+##' @param rootname character, indicating the name of the root data frame
+##' @return a list containing one or several data frame(s)
+##' @examples
+##' root <- data.frame(firmname=c("microdata", "bigdata"), 
+##'                       path=c("x1","x2"),
+##'                       employees.name=c(NA,"john"))
+##'                       
+##' products <- data.frame(products.productname=c("a","b","c","d"),
+##'                           path=c("x1", "x1", "x2", "x2"))
+##'                           
+##' employees <- data.frame(employees.name=c("sarah", "max"),
+##'                         path=c("x1","x1"))
+##'                         
+##' xlist <- list(root=root, products=products, employees=employees)
+##' 
+##' unifyDataframes(xlist)
+##' 
 
 unifyDataframes_all <- 
   function(x) {
@@ -120,8 +120,6 @@ unifyDataframes <-
     x <- x[lapply(x,length)!=0] 
     
     return(x)
-    
-    
     
   }
     
