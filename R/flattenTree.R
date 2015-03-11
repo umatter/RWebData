@@ -23,26 +23,25 @@
 
 
 flattenTree <-
-function(x, collapse.values=TRUE, collapse="_") {
-    
-    stopifnot(is.list(x))
-    
-    # collapse several leaf-value strings to one
-    # deals with attributes-xml
-    x <- rapply(x, f=paste, how="replace", collapse="_")
-    
-    # flatten tree structure/nested list
-    x.flat <- unlist(x)
-    
-    if (is.null(x.flat)){
-          return(x.flat)
-    }
-    
-    if (!is.null(names(x.flat))) {
-          # clean names
-          names(x.flat) <- gsub(pattern="-", replacement="", x=names(x.flat), fixed=TRUE)
-    }
-
-    return(x.flat)
-    
-  }
+      function(x, collapse.values=TRUE, collapse="_") {
+            
+            stopifnot(is.list(x))
+            
+            # collapse several leaf-value strings to one
+            # deals with attributes-xml
+            x <- rapply(x, f=paste, how="replace", collapse="_")
+            
+            # flatten tree structure/nested list
+            x.flat <- unlist(x)
+            
+            if (is.null(x.flat)){
+                  return(x.flat)
+            }
+            
+            if (!is.null(names(x.flat))) {
+                  # clean names
+                  names(x.flat) <- gsub(pattern="-", replacement="", x=names(x.flat), fixed=TRUE)
+            }
+            
+            return(x.flat)
+      }

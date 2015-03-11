@@ -8,7 +8,7 @@ setClass("apirequest",
                   request.arguments = "data.frame",
                   nodefault.parameters = "data.frame",
                   server = "character"
-         ))
+                  ))
 
 
 # apiresp, a class for API responses
@@ -27,7 +27,7 @@ setClass("sapiresp",
          slots= c(summary="list",
                   raw.type= "character",
                   statusMessage ="character"
-         ))
+                  ))
 
 
 
@@ -38,7 +38,7 @@ setClass("apidata",
                   raw.type = "character",
                   request.statusMessage = "character",
                   request.arguments = "data.frame"
-         ))
+                  ))
 
 
 
@@ -46,4 +46,4 @@ setClass("apidata",
 setClass("sapidata",
          slots= c(summary="summaryDefault",
                   varsummary="list"
-         ))
+                  ))

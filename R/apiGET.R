@@ -18,47 +18,45 @@
 
 
 apiGET <-
-function(x) {
-    stopifnot(is.apirequest(x))
-
-    url <- x@URL
-    
-    hf <- basicHeaderGatherer()
-    body  <- try(getURL(url, headerfunction=hf$update, useragent="RCurl-RwebAPI",
-                     .opts=curlOptions(followlocation=TRUE)), silent=TRUE)
-    
-    # Error handling in case of unexpected binary response:
-    if (class(body)=="try-error"){
-      
-      if (grepl("embedded nul in string", attributes(body)$condition )){
-        
-        # save binary data temporarily to decompress and read body
-        bin <- getBinaryURL(url, headerfunction=hf$update, useragent="RCurl-RwebAPI")
-        temp <- tempfile()
-        con <- file(temp, open = "wb")
-        writeBin(bin, con)
-        close(con)
-        body <- paste(readLines(temp, warn=FALSE), collapse="")
-        unlink(temp)
-        
-      } else {
-        body <- getURLContent(url, headerfunction=hf$update, useragent="RCurl-RwebAPI",
-                                    .opts=curlOptions(followlocation=TRUE)) 
-      }  
-    }
-        
-    header <- hf$value() # for optional use in further functions
-    type <- header["Content-Type"]
-    statusMessage <- header["statusMessage"]
-    
-    resp <- new("apiresp", 
-                body=body,
-                header=header,
-                type=type, 
-                statusMessage=statusMessage, 
-                request.arguments=x@request.arguments,
-                nodefault.parameters=x@nodefault.parameters)
-    
-    return(resp)
-    
-  }
+      function(x) {
+            stopifnot(is.apirequest(x))
+            
+            url <- x@URL
+            
+            hf <- basicHeaderGatherer()
+            body  <- try(getURL(url, headerfunction=hf$update, useragent="RCurl-RwebAPI",
+                                .opts=curlOptions(followlocation=TRUE)), silent=TRUE)
+            
+            # Error handling in case of unexpected binary response:
+            if (class(body)=="try-error"){
+                  if (grepl("embedded nul in string", attributes(body)$condition )){
+                        
+                        # save binary data temporarily to decompress and read body
+                        bin <- getBinaryURL(url, headerfunction=hf$update, useragent="RCurl-RwebAPI")
+                        temp <- tempfile()
+                        con <- file(temp, open = "wb")
+                        writeBin(bin, con)
+                        close(con)
+                        body <- paste(readLines(temp, warn=FALSE), collapse="")
+                        unlink(temp)
+                        
+                        } else {
+                              body <- getURLContent(url, headerfunction=hf$update, useragent="RCurl-RwebAPI",
+                                                    .opts=curlOptions(followlocation=TRUE))
+                        }
+            }
+            
+            header <- hf$value() # for optional use in further functions
+            type <- header["Content-Type"]
+            statusMessage <- header["statusMessage"]
+            
+            resp <- new("apiresp", 
+                        body=body,
+                        header=header,
+                        type=type, 
+                        statusMessage=statusMessage, 
+                        request.arguments=x@request.arguments,
+                        nodefault.parameters=x@nodefault.parameters)
+            
+            return(resp)
+      }

@@ -7,9 +7,7 @@
 ##' @export
 
 
-is.apiresp <- 
-  function(x) {
-    
-    inherits(x, "apiresp")
-    
-  }
+is.apiresp <-
+      function(x) {
+            inherits(x, "apiresp")
+      }

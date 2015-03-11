@@ -12,10 +12,8 @@
 
 
 mapiDatalight <-
-function(x, ...) {
-    
-    resp.list <- lapply(x, apiDatalight, ...)
-    
-    return(resp.list)
-    
-  }
+      function(x, ...) {
+            resp.list <- lapply(x, apiDatalight, ...)
+            
+            return(resp.list)
+      }

@@ -26,37 +26,42 @@
 ##' \dontrun{apidata <- apiEasyData(x) }
 
 
-apiEasyData <- 
-  function(x, base.url, shortnames=TRUE, ...) {
-    stopifnot( (is.list(x) | is.character(x)))
-    
-    if(is.list(x)) {  # parameter/values as list? proceed with apiDatalight...
-      
-      reqfun <- apiRequestFunction(x=x, base.url=base.url)
-      req <- reqfun()
-      data <- apiDatalight(req, ...)
-      
-      # cosmetics
-      if (shortnames==TRUE) {
-            data <- lapply(data, onlyLeafnames)}
-      if (length(data)==1 & is.data.frame(data[[1]])) {
-            data <- data[[1]]}
-      
-      return(data)
-      
-    } else { # url as input? simple procedure with less information in api-objects
-      
-      req <- url2apirequest(x)
-      data <- apiDatalight(req, ...)
-      
-      # cosmetics
-      if (shortnames==TRUE) {
-            data <- lapply(data, onlyLeafnames)}
-      if (length(data)==1 & is.data.frame(data[[1]])) {
-            data <- data[[1]]}
-      
-      return(data)
-
-   }
-  }
+apiEasyData <-
+      function(x, base.url, shortnames=TRUE, ...) {
+            stopifnot( (is.list(x) | is.character(x)))
+            
+            if (is.list(x)) {
+                  # parameter/values as list? proceed with apiDatalight...
+                  
+                  reqfun <- apiRequestFunction(x=x, base.url=base.url)
+                  req <- reqfun()
+                  data <- apiDatalight(req, ...)
+                  
+                  # cosmetics
+                  if (shortnames==TRUE) {
+                        data <- lapply(data, onlyLeafnames)
+                  }
+                  if (length(data)==1 & is.data.frame(data[[1]])) {
+                        data <- data[[1]]
+                  }
+                  
+                  return(data)
+                  
+            } else { # url as input? simple procedure with less information in api-objects
+                  
+                  req <- url2apirequest(x)
+                  data <- apiDatalight(req, ...)
+                  
+                  # cosmetics
+                  if (shortnames==TRUE) {
+                        data <- lapply(data, onlyLeafnames)
+                  }
+                  
+                  if (length(data)==1 & is.data.frame(data[[1]])) {
+                        data <- data[[1]]
+                  }
+                  
+                  return(data)
+            }
+      }
     

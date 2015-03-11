@@ -26,14 +26,15 @@ saveDL <-
             chunks.lower <- c(1,chunks.upper[-length(chunks.upper)] + 1)
             # prepare for loop over all chunks
             chunks <- data.frame(lower=chunks.lower, upper=chunks.upper)
-            if(progress=="bar") {pb <- txtProgressBar(min = 0, max = nrow(chunks), style = 3)}
+            if (progress=="bar") {
+                  pb <- txtProgressBar(min = 0, max = nrow(chunks), style = 3)
+            }
             
             response.list <- as.list(1:nrow(chunks))
             save(response.list, file=backupfile) # to be saved and loaded in each loop
             
             # process queries chunkwise
             for (i in 1:nrow(chunks)) {
-                  
                   Sys.sleep(pause)
                   
                   first <- chunks$lower[i]
@@ -47,10 +48,11 @@ saveDL <-
                   rm(response.list )
                   gc(verbose=FALSE) # clean memory
                   
-                  if(progress=="bar") {setTxtProgressBar(pb, i)
+                  if (progress=="bar") {
+                        setTxtProgressBar(pb, i)
                   }
                   
-                  if(progress=="text") {
+                  if (progress=="text") {
                         cat(paste0("\rData up to request number ", last,
                                    " saved in backup-file: ", backupfile, "."))
                         flush.console()
@@ -61,4 +63,5 @@ saveDL <-
             response.list <- redlist(response.list)
             
             return(response.list)
+      
       }

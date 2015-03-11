@@ -22,21 +22,15 @@
 
 
 apirespOK <-
-function(x){
-    stopifnot(is.apiresp(x))
-    
-    status <- HTTPstatus(x)
-    
-    if (status==200) {
-      
-      ok <- TRUE
-      
-    } else {
-      
-      ok <- FALSE
-      
-    }
-    
-    return(ok)
-    
-  }
+      function(x){
+            stopifnot(is.apiresp(x))
+            
+            status <- HTTPstatus(x)
+            
+            if (status==200) {
+                  ok <- TRUE
+                  } else {
+                        ok <- FALSE
+                  }
+            return(ok)
+      }

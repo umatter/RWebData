@@ -22,60 +22,56 @@
 
 
 tree2flat <-
-function(x, id) {
-
-    stopifnot(is.list(x), (is.character(id) & length(id)==1) )
-    
-    x.flat <- flattenTree(x)
-    vars <- names(x.flat)
-    
-    # data describing one or several observations?
-    id.occurences <- nin(id,vars, exact=FALSE)
-    
-    if (id.occurences==0) stop(paste("Error: id-variable '",id,"' not found in x"))
-      
-      
-      if (id.occurences == 1) { # data describes one obs, return x.flat
-        
-        names(x.flat) <- numberedNames(x.flat)
-        return(x.flat)
-      
-      } else {
-                
-        # count how often each of the unique variable names shows up in the df
-        
-        uvar <- unique(vars)
-        freqvar <- sapply(uvar, function(x) sum(as.numeric(vars %in% x)))
-        freqvar <- freqvar[freqvar>1]
-        
-        if (length(freqvar)>0) {
-          
-          seqfirst <- names(freqvar[1])
-          seqlast  <- names(freqvar[length(freqvar)])
-          
-          seqbegin <- sapply(c(seqfirst, seqlast), function(x) { which(vars==x)})
-          
-          if(!(length(seqbegin)>0)) return("error")
-          
-          flattable.list <- lapply(1:nrow(seqbegin), FUN=function(i){
+      function(x, id) {
+            stopifnot(is.list(x), (is.character(id) & length(id)==1) )
             
-            start <- seqbegin[i,1]
-            end <- seqbegin[i,2]
+            x.flat <- flattenTree(x)
+            vars <- names(x.flat)
             
-            x.flat[,start:end]
+            # data describing one or several observations?
+            id.occurences <- nin(id,vars, exact=FALSE)
             
-          })
-          
-          flattable.df <- dfList(flattable.list) # (cont. here) optionally also add the variables that only occur once (same for each row!)
-          
-          names(flattable.df) <- numberedNames(flattable.df)
-          return(flattable.df)
-          
-        } else { # only unique occurence of vars --> suggests only one observation described by tree-data
-          
-          names(x.flat) <- numberedNames(x.flat)
-          return(x.flat)
-          
-        } 
+            if (id.occurences==0) stop(paste("Error: id-variable '",id,"' not found in x"))
+            
+            
+            if (id.occurences == 1) { # data describes one obs, return x.flat
+                  names(x.flat) <- numberedNames(x.flat)
+                  return(x.flat)
+                  
+                  } else {
+                        # count how often each of the unique variable names shows up in the df
+                        
+                        uvar <- unique(vars)
+                        freqvar <- sapply(uvar, function(x) sum(as.numeric(vars %in% x)))
+                        freqvar <- freqvar[freqvar>1]
+                        
+                        if (length(freqvar)>0) {
+                              
+                              seqfirst <- names(freqvar[1])
+                              seqlast  <- names(freqvar[length(freqvar)])
+                              
+                              seqbegin <- sapply(c(seqfirst, seqlast), function(x) { which(vars==x)})
+                              
+                              if (!(length(seqbegin)>0)) {
+                                    return("error")
+                              }
+                              
+                              flattable.list <- lapply(1:nrow(seqbegin), FUN=function(i){
+                                    start <- seqbegin[i,1]
+                                    end <- seqbegin[i,2]
+                                    x.flat[,start:end]
+                                    }
+                                    )
+                              
+                              flattable.df <- dfList(flattable.list) # (cont. here) optionally also add the variables that only occur once (same for each row!)
+                              
+                              names(flattable.df) <- numberedNames(flattable.df)
+                              return(flattable.df)
+                              
+                              } else { # only unique occurence of vars --> suggests only one observation described by tree-data
+                                    names(x.flat) <- numberedNames(x.flat)
+                                    
+                                    return(x.flat)
+                              }
+                  }
       }
-    }

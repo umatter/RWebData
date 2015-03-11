@@ -39,183 +39,182 @@
 
 
 apiRequestFunction <-
-function(x, base.url, multiparam=NULL, key.param=NA, key.object=NA, vectorizeIt=FALSE){
-    stopifnot((is.null(multiparam) | is.character(multiparam)), length(multiparam)<=1, (is.list(x) | is.data.frame(x)))
-    if (!is.data.frame(x) & is.list(x) & !is.null(multiparam) ) { 
-          stop("multiparam can only be used in combination with x as a data frame.\nx is not a data frame.")}
-    if (!is.data.frame(x) & is.list(x) & vectorizeIt==TRUE ) { 
-          stop("vectorizeIt=TRUE can only be used in combination with x as a data frame.\nx is not a data frame.")}
-    
-    
-    f <- function(){}  # set basic function to be extended...
-    
-    # I) STANDARD INPUT/PROCEDURE: X IS A DATA FRAME:
-    if (is.data.frame(x)) {# standard input to build apiRequestFunction? 
-    
-    # extract normal parameters, add multiparam if necessary
-    plist <- as.paramlist(x)
-    
-    if(is.character(multiparam)) { # add repeated param to paramlist
-      
-      multivalues <- structure(replicate(length(multiparam), formals(function(x){})$x ), names=multiparam)
-      plist$parameters <- c(multivalues, plist$parameters)
-      
-    }
-    
-    formals(f) <- plist$parameters 
-    
-    # write string of basic url (server) in order to be pased on in the resulting function
-    server <- base.url
-    serverstring <-  paste("server <- '", server, "'", sep="")
-    e.server <- parse(text=serverstring)
-    
-    # extract parameters as strings, construct expressions for body
-    pstrings <- plist$p.strings
-    pstrings2 <- paste("'&", pstrings, "=',", sep="")
-    symbolproblem <- grepl(pattern="-", x=pstrings, fixed=TRUE) # NEW
-    pstrings[symbolproblem] <- paste0("`", pstrings[symbolproblem],"`") # NEW deals with "-" in strings
-    pstrings.url <- paste(pstrings2, pstrings, collapse=", ")
-    pstrings.url <- sub(pattern="&", replacement="", x=pstrings.url, fixed=TRUE) # remove first &
-    pstrings.url <- paste("params <- paste0(", pstrings.url, ")", sep="")
-    
-    # write adding of basic url and api-key if available
-    if (is.na(key.param) & is.na(key.object)) {
-      urlstring <- paste("'", base.url, "', params ", sep="") 
-      keystring <- ""    
-    } else {
-      urlstring <- paste("'", base.url, "', params, ", "'&", key.param, "=', api.key", sep="") 
-      keystring <- paste0("api.key <- get('", key.object,  "', pos='apikeys')")    
-    }
-    
-    urlpaste <- paste0("url <- paste0(", urlstring, ")")
-    
-    
-    e.params <- parse(text=pstrings.url)
-    e.key <- parse(text=keystring)
-    e.url <- parse(text=urlpaste)
-    
-    # add request parameters (in order to keep track of what request caused an error) 
-    if (length(plist$nodefaults)>0) {
-      
-      ndstrings <- plist$nodefaults
-      symbprob <- grepl(pattern="-", x=ndstrings, fixed=TRUE) # NEW
-      ndstrings[symbprob] <- paste0("`", ndstrings[symbprob],"`") # NEW deals with "-" in strings
-      
-      ndstrings.arg <- paste(ndstrings, collapse=", ")
-      ndstrings.df <- paste("ndrequest <- data.frame(", ndstrings.arg, ")", sep="")
-      ndstrings2 <- paste0("'", ndstrings, "'", collapse=", ")
-      ndstrings.dfnames <- paste0("names(ndrequest) <- c(", ndstrings2,")")
-      
-      e.paramdf <- parse(text=ndstrings.df)
-      e.namesdf <- parse(text=ndstrings.dfnames)
-    
-    } else {
-      e.paramdf <- expression( )
-      e.namesdf <- expression( ndrequest <- data.frame())
-    }
-    
-    e.args <- expression(rarg <- as.data.frame(t(as.list(environment())), stringsAsFactors=FALSE))
-    e.object <- expression(apirequest <- new("apirequest", URL=url, request.arguments=rarg,
-                                             nodefault.parameters=ndrequest, server=server ))
-    e.return <- expression(return(apirequest))
-    
-    e <- c(e.args, e.params, e.key, e.url, e.paramdf, e.namesdf, e.server, e.object, e.return)
-    
-    
-    
-    if(is.character(multiparam)) { # add multiparam to 
-      
-      multistring <- paste0("for (i in 1:length(", multiparam, ")) { mparams <- paste0(mparams, '&",
-                            multiparam,"=', ", multiparam, "[i])}")
-      
-      e.multi1 <- expression(mparams <- c())
-      e.multi2 <- parse(text=multistring)
-      e.multi3 <- expression(mparams <- sub(pattern="&", replacement="", x=mparams, fixed=TRUE)) # remove first &
-      e.multi4 <- expression(params <- paste(mparams, params, sep="&"))
+      function(x, base.url, multiparam=NULL, key.param=NA, key.object=NA, vectorizeIt=FALSE){
+            stopifnot((is.null(multiparam) | is.character(multiparam)), length(multiparam)<=1, (is.list(x) | is.data.frame(x)))
             
-      e <- c(e.args,
-             e.params,
-             e.multi1,
-             e.multi2,
-             e.multi3,
-             e.multi4,
-             e.key,
-             e.url,
-             e.paramdf,
-             e.namesdf,
-             e.server,
-             e.object,
-             e.return)
-      
-    } 
-    
-
-    
-    # define body of the function
-    body(f) <- as.call(c(as.name("{"),e))
-    
-    
-    if (vectorizeIt==TRUE & length(plist$nodefaults)>0 ){ # should function contain implicit loop over no-default parameters?
-      
-      f <- vectorizeIt(f)
-      
-    }
-    
-    return(f)
-    
-    
-    # ALTERNATIVE II) X IS NOT A DATA FRAME --> SIMPLIFIED PROCEDURE (NO MULTIPARAM ALLOWED)
-    } else { 
-    
-      
-      formals(f) <- x
-      
-      # write string of basic url (server) in order to be pased on in the resulting function
-      server <- base.url
-      serverstring <-  paste("server <- '", server, "'", sep="")
-      e.server <- parse(text=serverstring)
-      
-      # extract parameters as strings, construct expressions for body
-      pstrings <- names(x)
-      pstrings2 <- paste("'&", pstrings, "=',", sep="")
-      pstrings.url <- paste(pstrings2, pstrings, collapse=", ")
-      pstrings.url <- sub(pattern="&", replacement="", x=pstrings.url, fixed=TRUE) # remove first &
-      pstrings.url <- paste("params <- paste0(", pstrings.url, ")", sep="")
-      
-      # write adding of basic url and api-key
-      if (is.na(key.param) & is.na(key.object)){
-        urlstring <- paste("'", base.url, "', params ", sep="") 
-        keystring <- ""    
-      } else {
-        urlstring <- paste("'", base.url, "', params, ", "'&", key.param, "=', api.key", sep="") 
-        keystring <- paste0("api.key <- get('", key.object,  "', pos='apikeys')")    
+            if (!is.data.frame(x) & is.list(x) & !is.null(multiparam) ) {
+                  stop("multiparam can only be used in combination with x as a data frame.\nx is not a data frame.")
+            }
+            if (!is.data.frame(x) & is.list(x) & vectorizeIt==TRUE ) {
+                  stop("vectorizeIt=TRUE can only be used in combination with x as a data frame.\nx is not a data frame.")
+            }
+            
+            
+            f <- function(){}  # set basic function to be extended...
+            
+            # I) STANDARD INPUT/PROCEDURE: X IS A DATA FRAME:
+            if (is.data.frame(x)) {# standard input to build apiRequestFunction?
+                  
+                  # extract normal parameters, add multiparam if necessary
+                  plist <- as.paramlist(x)
+                  
+                  if (is.character(multiparam)) { # add repeated param to paramlist
+                        
+                        multivalues <- structure(replicate(length(multiparam), formals(function(x){})$x ), names=multiparam)
+                        plist$parameters <- c(multivalues, plist$parameters)
+                  }
+                  
+                  formals(f) <- plist$parameters 
+                  
+                  # write string of basic url (server) in order to be pased on in the resulting function
+                  server <- base.url
+                  serverstring <-  paste("server <- '", server, "'", sep="")
+                  e.server <- parse(text=serverstring)
+                  
+                  # extract parameters as strings, construct expressions for body
+                  pstrings <- plist$p.strings
+                  pstrings2 <- paste("'&", pstrings, "=',", sep="")
+                  symbolproblem <- grepl(pattern="-", x=pstrings, fixed=TRUE) # NEW
+                  pstrings[symbolproblem] <- paste0("`", pstrings[symbolproblem],"`") # NEW deals with "-" in strings
+                  pstrings.url <- paste(pstrings2, pstrings, collapse=", ")
+                  pstrings.url <- sub(pattern="&", replacement="", x=pstrings.url, fixed=TRUE) # remove first &
+                  pstrings.url <- paste("params <- paste0(", pstrings.url, ")", sep="")
+                  
+                  # write adding of basic url and api-key if available
+                  if (is.na(key.param) & is.na(key.object)) {
+                        urlstring <- paste("'", base.url, "', params ", sep="") 
+                        keystring <- ""    
+                  } else {
+                        urlstring <- paste("'", base.url, "', params, ", "'&", key.param, "=', api.key", sep="") 
+                        keystring <- paste0("api.key <- get('", key.object,  "', pos='apikeys')")
+                  }
+                  
+                  urlpaste <- paste0("url <- paste0(", urlstring, ")")
+                  
+                  e.params <- parse(text=pstrings.url)
+                  e.key <- parse(text=keystring)
+                  e.url <- parse(text=urlpaste)
+                  
+                  # add request parameters (in order to keep track of what request caused an error) 
+                  if (length(plist$nodefaults)>0) {
+                        
+                        ndstrings <- plist$nodefaults
+                        symbprob <- grepl(pattern="-", x=ndstrings, fixed=TRUE) # NEW
+                        ndstrings[symbprob] <- paste0("`", ndstrings[symbprob],"`") # NEW deals with "-" in strings
+                        
+                        ndstrings.arg <- paste(ndstrings, collapse=", ")
+                        ndstrings.df <- paste("ndrequest <- data.frame(", ndstrings.arg, ")", sep="")
+                        ndstrings2 <- paste0("'", ndstrings, "'", collapse=", ")
+                        ndstrings.dfnames <- paste0("names(ndrequest) <- c(", ndstrings2,")")
+                        
+                        e.paramdf <- parse(text=ndstrings.df)
+                        e.namesdf <- parse(text=ndstrings.dfnames)
+                        
+                  } else {
+                        e.paramdf <- expression( )
+                        e.namesdf <- expression( ndrequest <- data.frame())
+                  }
+                  
+                  e.args <- expression(rarg <- as.data.frame(t(as.list(environment())), stringsAsFactors=FALSE))
+                  e.object <- expression(apirequest <- new("apirequest",
+                                                           URL=url,
+                                                           request.arguments=rarg,
+                                                           nodefault.parameters=ndrequest,
+                                                           server=server ))
+                  e.return <- expression(return(apirequest))
+                  
+                  e <- c(e.args, e.params, e.key, e.url, e.paramdf, e.namesdf, e.server, e.object, e.return)
+                  
+                  
+                  if (is.character(multiparam)) { # add multiparam
+                        
+                        multistring <- paste0("for (i in 1:length(", multiparam, ")) { mparams <- paste0(mparams, '&",
+                                              multiparam,"=', ", multiparam, "[i])}")
+                        
+                        e.multi1 <- expression(mparams <- c())
+                        e.multi2 <- parse(text=multistring)
+                        e.multi3 <- expression(mparams <- sub(pattern="&", replacement="", x=mparams, fixed=TRUE)) # remove first &
+                        e.multi4 <- expression(params <- paste(mparams, params, sep="&"))
+                        
+                        e <- c(e.args,
+                               e.params,
+                               e.multi1,
+                               e.multi2,
+                               e.multi3,
+                               e.multi4,
+                               e.key,
+                               e.url,
+                               e.paramdf,
+                               e.namesdf,
+                               e.server,
+                               e.object,
+                               e.return)
+                  } 
+                  
+                  
+                  # define body of the function
+                  body(f) <- as.call(c(as.name("{"),e))
+                  
+                  if (vectorizeIt==TRUE & length(plist$nodefaults)>0 ){ # should function contain implicit loop over no-default parameters?
+                        
+                        f <- vectorizeIt(f)
+                  }
+                  
+                  return(f)
+                  
+                  # ALTERNATIVE II) X IS NOT A DATA FRAME --> SIMPLIFIED PROCEDURE (NO MULTIPARAM ALLOWED)
+                  
+                  } else {
+                        
+                        formals(f) <- x
+                        
+                        # write string of basic url (server) in order to be pased on in the resulting function
+                        server <- base.url
+                        serverstring <-  paste("server <- '", server, "'", sep="")
+                        e.server <- parse(text=serverstring)
+                        
+                        # extract parameters as strings, construct expressions for body
+                        pstrings <- names(x)
+                        pstrings2 <- paste("'&", pstrings, "=',", sep="")
+                        pstrings.url <- paste(pstrings2, pstrings, collapse=", ")
+                        pstrings.url <- sub(pattern="&", replacement="", x=pstrings.url, fixed=TRUE) # remove first &
+                        pstrings.url <- paste("params <- paste0(", pstrings.url, ")", sep="")
+                        
+                        # write adding of basic url and api-key
+                        if (is.na(key.param) & is.na(key.object)){
+                              urlstring <- paste("'", base.url, "', params ", sep="") 
+                              keystring <- ""
+                              } else {
+                                    urlstring <- paste("'", base.url, "', params, ", "'&", key.param, "=', api.key", sep="")
+                                    keystring <- paste0("api.key <- get('", key.object,  "', pos='apikeys')")
+                              }
+                        
+                        urlpaste <- paste0("url <- paste0(", urlstring, ")")
+                        
+                        e.params <- parse(text=pstrings.url)
+                        e.key <- parse(text=keystring)
+                        e.url <- parse(text=urlpaste)
+                        
+                        # add request parameters (in order to keep track of what request caused an error)
+                        # nodefault parameters not allowed hence only...
+                        
+                        e.paramdf <- expression( )
+                        e.namesdf <- expression( ndrequest <- data.frame() )
+                        
+                        e.args <- expression(rarg <- as.data.frame(t(as.list(environment())), stringsAsFactors=FALSE))
+                        e.object <- expression(apirequest <- new("apirequest",
+                                                                 URL=url,
+                                                                 request.arguments=rarg,
+                                                                 nodefault.parameters=ndrequest,
+                                                                 server=server ))
+                        e.return <- expression(return(apirequest))
+                        
+                        e <- c(e.args, e.params, e.key, e.url, e.paramdf, e.namesdf, e.server, e.object, e.return)
+                        
+                        # define body of the function
+                        body(f) <- as.call(c(as.name("{"),e))
+                        
+                        return(f)
+                  }
       }
-      
-      urlpaste <- paste0("url <- paste0(", urlstring, ")")
-      
-      e.params <- parse(text=pstrings.url)
-      e.key <- parse(text=keystring)
-      e.url <- parse(text=urlpaste)
-      
-      # add request parameters (in order to keep track of what request caused an error)
-      # nodefault parameters not allowed hence only...
-
-      e.paramdf <- expression( )
-      e.namesdf <- expression( ndrequest <- data.frame() )
-      
-      e.args <- expression(rarg <- as.data.frame(t(as.list(environment())), stringsAsFactors=FALSE))
-      e.object <- expression(apirequest <- new("apirequest", URL=url, request.arguments=rarg,
-                                               nodefault.parameters=ndrequest, server=server ))
-      e.return <- expression(return(apirequest))
-      
-      e <- c(e.args, e.params, e.key, e.url, e.paramdf, e.namesdf, e.server, e.object, e.return)
-  
-      # define body of the function
-      body(f) <- as.call(c(as.name("{"),e))
-    
-    return(f)
-      
-    }
-    
-  }
     

@@ -49,7 +49,7 @@ repseqSplit3 <-
                                     
                                     if (identical(rest,restseq)) {
                                           rest <- NULL
-                                          }else {
+                                          } else {
                                                 extr.rest <- (mocc_ucje+1):length(rest)
                                                 rest <- rest[extr.rest]
                                           }
@@ -72,9 +72,9 @@ repseqSplit3 <-
                               
                               if (pi.occ) {
                                     class.j <- c(class.j, new.seqstart)
-                                    } else {
-                                          deposit <- c(deposit, new.seqstart)
-                                    }
+                              } else {
+                                    deposit <- c(deposit, new.seqstart)
+                              }
                               rest <- rest[-1]
                               new.seqstart <- rest[1]
                               occrest <- which(rest[-1]==new.seqstart)
@@ -88,7 +88,8 @@ repseqSplit3 <-
             }
             
             if (length(deposit)>0) {
-                  seqs <- c(list(deposit),seqs)}
+                  seqs <- c(list(deposit),seqs)
+            }
             
             return(seqs)
       }

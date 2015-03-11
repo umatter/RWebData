@@ -12,9 +12,8 @@
 
 
 getdata <-
-  function(x) {
-    stopifnot(is.apidata(x))
-    
-    return(x@data)
-    
-  }
+      function(x) {
+            stopifnot(is.apidata(x))
+            
+            return(x@data)
+      }

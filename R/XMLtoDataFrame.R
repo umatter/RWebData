@@ -16,17 +16,15 @@
 
 
 XMLtoDataFrame <-
-  function(x) {
-    
-    if (file.exists(x)){
-      body <- readLines(x)
-    } else {
-      body <- x
-    }
-    
-    x.list <- xml2list(body) 
-    x.vector <- flattenTree(x.list)
-    x.df <- auto.tree2flat(x.vector)
-    return(x.df)
-  }
+      function(x) {
+            if (file.exists(x)){
+                  body <- readLines(x)
+                  } else {
+                        body <- x
+                  }
+            x.list <- xml2list(body)
+            x.vector <- flattenTree(x.list)
+            x.df <- auto.tree2flat(x.vector)
+            return(x.df)
+      }
 

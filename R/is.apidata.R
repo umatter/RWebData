@@ -7,9 +7,7 @@
 ##' @export
 
 
-is.apidata <- 
-  function(x) {
-    
-    inherits(x, "apidata")
-    
-  }
+is.apidata <-
+      function(x) {
+            inherits(x, "apidata")
+      }

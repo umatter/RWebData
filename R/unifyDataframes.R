@@ -27,99 +27,96 @@
 ##' 
 
 unifyDataframes_all <- 
-  function(x) {
-    
-    dfs <- names(x)
-    
-    for (i in dfs) {
       
-     x <-  unifyDataframes(x, rootname=i)
-      
-    }
-    
-    return(x)
- 
-  }
-
+      function(x) {
+            dfs <- names(x)
+            for (i in dfs) {
+                  x <-  unifyDataframes(x, rootname=i)
+            }
+            
+            return(x)
+      }
 
 unifyDataframes <-
-  function(x, rootname="root") {
-    stopifnot(is.list(x))
+      function(x, rootname="root") {
+            stopifnot(is.list(x))
+            
+            dfs <- names(x)[names(x)!=rootname]
+            rootnames <- names(x[[rootname]])
+            
+            # I) check which variables show up in the root element AND in other dfs
+            #    if there are none showing up, return x as it is
+            
+            dfnamesocc <- lapply(dfs, FUN=function(j){
+                  
+                  i <- x[[j]]
+                  
+                  names.i <- names(i)
+                  inroot <- rootnames %in% names.i[names.i!="path"]
+                  
+                  resp <- rootnames[inroot]
+                  if (length(resp)==0) {resp <- NA}
+                  return(resp)
+                  
+            })
+            names(dfnamesocc) <- dfs
+            dfnamesocc <- dfnamesocc[!is.na(dfnamesocc)] # keep only non-empty entries
+            
+            if (length(dfnamesocc)==0) return(x)
+            
+            
+            # II) ...if some variables occur several times. extract them from the
+            # root data frame and add them (ther respective obs) to the respective
+            # df.
+            
+            for (i in names(dfnamesocc)) {
+                  
+                  # a) extract from root add to respective table, delete in root
+                  vars <- dfnamesocc[[i]]
+                  names(vars) <- vars
+                  pn_vars <- parentName(vars)
+                  
+                  if (pn_vars!=rootname) {
+                        
+                        extrcol <- x[[rootname]][,vars]
+                        extrobs <- x[[rootname]][!is.na(extrcol),c(vars,"path")] # also extract path/ID!
+                        extrobs <- extrobs[!is.na(extrobs$path),]
+                        
+                        x[[pn_vars]] <- dfList(list(x[[pn_vars]], extrobs)) # add to parenttable
+                        x[[rootname]] <- x[[rootname]][,!(names(x[[rootname]]) %in% vars)]  # delete in root
+                        
+                  }
+                  
+            }
+            
+            # delete list entries if only contain df with ID or no df at all
+            x <- lapply(x, FUN=function(i){
+                  
+                  if (!is.data.frame(i)){
+                        NULL
+                  } else {
+                        i
+                  }
+            })
+            x <- lapply(x, FUN=function(i){
+                  
+                  if (length(names(i))==1){
+                        if (names(i)=="path"){
+                              NULL
+                        } else {
+                              i
+                        }
+                  } else {
+                        i
+                  }
+                  
+            })
+            x <- x[lapply(x,length)!=0] 
+            
+            return(x)
     
     
-    dfs <- names(x)[names(x)!=rootname]
-    rootnames <- names(x[[rootname]])
     
-    # I) check which variables show up in the root element AND in other dfs
-    #    if there are none showing up, return x as it is
-    
-    dfnamesocc <- lapply(dfs, FUN=function(j){
-      
-      i <- x[[j]]
-      
-      names.i <- names(i)
-      inroot <- rootnames %in% names.i[names.i!="path"]
-      
-      resp <- rootnames[inroot]
-      if (length(resp)==0) {resp <- NA}
-      return(resp)
-      
-    })
-    names(dfnamesocc) <- dfs
-    dfnamesocc <- dfnamesocc[!is.na(dfnamesocc)] # keep only non-empty entries
-    
-    if (length(dfnamesocc)==0) return(x)
-    
-    
-    # II) ...if some variables occur several times. extract them from the
-    # root data frame and add them (ther respective obs) to the respective
-    # df.
-    
-    for (i in names(dfnamesocc)) {
-      
-      # a) extract from root add to respective table, delete in root
-      vars <- dfnamesocc[[i]]
-      names(vars) <- vars
-      pn_vars <- parentName(vars)
-      
-      if (pn_vars!=rootname) {
-        
-        extrcol <- x[[rootname]][,vars]
-        extrobs <- x[[rootname]][!is.na(extrcol),c(vars,"path")] # also extract path/ID!
-        extrobs <- extrobs[!is.na(extrobs$path),]
-        
-        x[[pn_vars]] <- dfList(list(x[[pn_vars]], extrobs)) # add to parenttable
-        x[[rootname]] <- x[[rootname]][,!(names(x[[rootname]]) %in% vars)]  # delete in root
-        
-      }
-      
-    }
-    
-    # delete list entries if only contain df with ID or no df at all
-    x <- lapply(x, FUN=function(i){
-      
-      if (!is.data.frame(i)){
-          NULL
-        } else {
-          i
-        }
-      })
-    x <- lapply(x, FUN=function(i){
-      
-      if (length(names(i))==1){
-        if (names(i)=="path"){
-          NULL
-        } else {
-          i
-        }
-      } else {
-        i
-      }
-      
-    })
-    x <- x[lapply(x,length)!=0] 
-    
-    return(x)
     
   }
     

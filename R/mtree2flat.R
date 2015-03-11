@@ -39,17 +39,16 @@
 
 
 mtree2flat <-
-function(x, ids) {
-    
-    stopifnot(length(x)==length(ids), is.list(x), is.character(ids), length(x)>0, length(ids)>0)
-    
-    lapply(seq_along(x), FUN=function(i){
-      
-      x.i <- x[[i]]
-      id.i <- ids[i]
-      
-      tree2flat(x.i, id.i)
-      
-    })
-    
-  }
+      function(x, ids) {
+            stopifnot(length(x)==length(ids), is.list(x), is.character(ids), length(x)>0, length(ids)>0)
+            
+            lapply(seq_along(x), FUN=function(i){
+                  
+                  x.i <- x[[i]]
+                  id.i <- ids[i]
+                  
+                  tree2flat(x.i, id.i)
+                  
+            }
+            )
+      }

@@ -15,17 +15,15 @@
 
 
 
-
 JSONtoDataFrame <-
-  function(x) {
-    
-    x.list <- try(RJSONIO::fromJSON(x, nullValue=NA, simplify=FALSE), silent=TRUE)
-    
-    if (class(x.list)=="try-error") {
-          x.list <- .fromJSON_R_NA(x)}  # based and dependend on rjson
-    x.vector <- flattenTree(x.list)
-    x.df <- auto.tree2flat(x.vector)
-    
-    return(x.df)
-    
-  }
+      function(x) {
+            x.list <- try(RJSONIO::fromJSON(x, nullValue=NA, simplify=FALSE), silent=TRUE)
+            
+            if (class(x.list)=="try-error") {
+                  x.list <- .fromJSON_R_NA(x)
+                  }  # based and dependend on rjson
+            x.vector <- flattenTree(x.list)
+            x.df <- auto.tree2flat(x.vector)
+            
+            return(x.df)
+      }

@@ -9,7 +9,7 @@
 
 
 # definition of the print function
-print.apirequest <- 
+print.apirequest <-
       function(x) {
             url <- x@URL
             ra <- x@request.arguments
@@ -27,7 +27,7 @@ print.apirequest <-
 setMethod(f = "print",
           signature = "apirequest",
           definition = print.apirequest
-)
+          )
 
 
 
@@ -38,7 +38,7 @@ setMethod(f = "print",
 
 
 # definition of the print function
-show.apirequest <- 
+show.apirequest <-
       function(object) {
             url <- object@URL
             ra <- object@request.arguments
@@ -57,7 +57,7 @@ show.apirequest <-
 setMethod(f = "show",
           signature = "apirequest",
           definition = show.apirequest
-)
+          )
 
 
 #------------------------------------
@@ -66,7 +66,7 @@ setMethod(f = "show",
 
 
 # definition of the print function
-print.apiresp <- 
+print.apiresp <-
       function(x) {
             type <- x@type
             sm <- x@statusMessage
@@ -83,7 +83,7 @@ print.apiresp <-
 setMethod(f = "print",
           signature = "apiresp",
           definition = print.apiresp
-)
+          )
 
 
 
@@ -94,7 +94,7 @@ setMethod(f = "print",
 
 
 # definition of the print function
-show.apiresp <- 
+show.apiresp <-
       function(object) {
             type <- object@type
             sm <- object@statusMessage
@@ -112,7 +112,7 @@ show.apiresp <-
 setMethod(f = "show",
           signature = "apiresp",
           definition = show.apiresp
-)
+          )
 
 
 
@@ -125,30 +125,31 @@ setMethod(f = "show",
 
 # definition of the print function
 summary.apiresp <-
-  function(object){
+      function(object){
+            x.list <- content2list(object)
+            elementlist <- listElements(x.list, na.omit=TRUE)
+            levelnames <- c("Toplevel:", paste("Level ", 2:length(elementlist),": ", sep=""))
+            
+            levelsummaries <- lapply(elementlist, FUN=function(i){
+                  sumi <- paste(names(i), " (", as.numeric(i),")", sep="")
+                  sumi_string <- paste(sumi, collapse=", ")
+                  sumi_string
+            }
+            )
+            
+            levelsummaries <- paste(levelsummaries, "\n")
+            ind <- 2 # indentation after "Level..."
+            exd <- max(nchar(levelnames)) + ind +1 # indentation next paragraph
+            levelsummaries <- str_wrap(levelsummaries, width=100, indent=ind, exdent=exd)
+            
+            s <- new(Class="sapiresp",
+                     summary=list(levelsummaries, levelnames),
+                     raw.type=object@type,
+                     statusMessage=object@statusMessage)
+            
+            return(s)
         
-        x.list <- content2list(object)
-        elementlist <- listElements(x.list, na.omit=TRUE)
-        levelnames <- c("Toplevel:", paste("Level ", 2:length(elementlist),": ", sep=""))
         
-        levelsummaries <- lapply(elementlist, FUN=function(i){
-              sumi <- paste(names(i), " (", as.numeric(i),")", sep="")
-              sumi_string <- paste(sumi, collapse=", ")
-              sumi_string
-        }
-        )
-        
-        levelsummaries <- paste(levelsummaries, "\n")
-        ind <- 2 # indentation after "Level..."
-        exd <- max(nchar(levelnames)) + ind +1 # indentation next paragraph
-        levelsummaries <- str_wrap(levelsummaries, width=100, indent=ind, exdent=exd)
-        
-        s <- new(Class="sapiresp",
-                 summary=list(levelsummaries, levelnames),
-                 raw.type=object@type,
-                 statusMessage=object@statusMessage)
-        
-        return(s)
   }
 
 
@@ -180,7 +181,6 @@ print.summary.apiresp <-
             
             for (j in 1:length(levelsummaries)) {
                   cat(levelsummaries[j], labels=levelnames[j], fill=TRUE)
-                  
             }
             
             cat(typestring)
@@ -192,7 +192,7 @@ print.summary.apiresp <-
 setMethod(f = "print",
           signature = "sapiresp",
           definition = print.summary.apiresp
-)
+          )
 
 
 #------------------------------------
@@ -214,9 +214,7 @@ show.summary.apiresp <-
             levelnames <- object@summary[[2]]
             
             for (j in 1:length(levelsummaries)) {
-                  
                   cat(levelsummaries[j], labels=levelnames[j], fill=TRUE)
-                  
             }
             
             cat(typestring)
@@ -229,7 +227,7 @@ show.summary.apiresp <-
 setMethod(f = "show",
           signature = "sapiresp",
           definition = show.summary.apiresp
-)
+          )
 
 
 
@@ -239,40 +237,41 @@ setMethod(f = "show",
 
 # method definition
 plot.apiresp <-
-  function(x, type="normal", char.lim=8, all=FALSE, leveldist=0.15, vertex.size=16,
+      function(x, type="normal", char.lim=8, all=FALSE, leveldist=0.15, vertex.size=16,
            vertex.shape="none", vertex.label.cex=0.7, ...) {
-    stopifnot((type=="normal" | type=="jitter" | type=="manualscale"))
-    
-    x <- content2list(x)    
-    
-    if (type=="normal") { 
-          visualize.treedata(x=x,
-                             all=all,
-                             vertex.size=vertex.size,
-                             vertex.shape=vertex.shape,
-                             vertex.label.cex=vertex.label.cex, 
-                             ...)
-    }
-    
-    if (type=="jitter") {
-          visualize.treedata.jitter(x=x,
-                                    char.lim=char.lim,
-                                    leveldist=leveldist,
-                                    all=all, vertex.size=vertex.size,
-                                    vertex.shape=vertex.shape,
-                                    vertex.label.cex=vertex.label.cex,
-                                    ...)
-    }
-    
-    if (type=="manualscale") {
-          visualize.treedata.manual(x=x,
-                                    all=all,
-                                    vertex.size=vertex.size,
-                                    vertex.shape=vertex.shape,
-                                    vertex.label.cex=vertex.label.cex,
-                                    ...)}
-    
-  }
+            stopifnot((type=="normal" | type=="jitter" | type=="manualscale"))
+            
+            x <- content2list(x)    
+            
+            if (type=="normal") {
+                  visualize.treedata(x=x,
+                                     all=all,
+                                     vertex.size=vertex.size,
+                                     vertex.shape=vertex.shape,
+                                     vertex.label.cex=vertex.label.cex, 
+                                     ...)
+            }
+            
+            if (type=="jitter") {
+                  visualize.treedata.jitter(x=x,
+                                            char.lim=char.lim,
+                                            leveldist=leveldist,
+                                            all=all, vertex.size=vertex.size,
+                                            vertex.shape=vertex.shape,
+                                            vertex.label.cex=vertex.label.cex,
+                                            ...)
+                  
+            }
+            
+            if (type=="manualscale") {
+                  visualize.treedata.manual(x=x,
+                                            all=all,
+                                            vertex.size=vertex.size,
+                                            vertex.shape=vertex.shape,
+                                            vertex.label.cex=vertex.label.cex,
+                                            ...)
+            }
+      }
 
 # set plot method
 setMethod(f = "plot",
@@ -299,7 +298,7 @@ print.apidata <-
 setMethod(f = "print",
           signature = "apidata",
           definition = print.apidata
-)
+          )
 
 
 
@@ -319,7 +318,7 @@ show.apidata <-
 setMethod(f = "show",
           signature = "apidata",
           definition = show.apidata
-)
+          )
 
 
 #------------------------------------
@@ -329,18 +328,17 @@ setMethod(f = "show",
 
 # definition of the summary function
 summary.apidata <-
-  function(object){
-        
-        data <- object@data
-        totalsummary <- summary(data)
-        s.list <- lapply(data,names)
-        
-        s <- new(Class="sapidata",
-                 summary=totalsummary,
-                 varsummary=s.list)
-        
-        return(s)
-  }
+      function(object){
+            data <- object@data
+            totalsummary <- summary(data)
+            s.list <- lapply(data,names)
+            
+            s <- new(Class="sapidata",
+                     summary=totalsummary,
+                     varsummary=s.list)
+            
+            return(s)
+      }
 
 
 
@@ -359,7 +357,7 @@ setMethod(f = "summary", signature="apidata",
 
 
 # definition of the print function
-print.summary.apidata <- 
+print.summary.apidata <-
       function(x) {
             s <- x@summary
             s.list <- x@varsummary
@@ -415,7 +413,6 @@ show.summary.apidata <-
             cat(varstr)
             
             for (j in 1:length(s.list)) {
-                  
                   nsstr <- paste0(j, ". ", ns[j], ":\n")
                   cat(nsstr)
                   cat(paste0(s.list[[j]], sep=", "), fill=TRUE)
@@ -428,7 +425,7 @@ show.summary.apidata <-
 setMethod(f = "show",
           signature = "sapidata",
           definition = show.summary.apidata
-)
+          )
 
 
 
@@ -438,42 +435,44 @@ setMethod(f = "show",
 
 # method definition
 plot.apidata <-
-  function(x, type="normal", char.lim=8, all=FALSE, leveldist=0.15, vertex.size=16,
+      function(x, type="normal", char.lim=8, all=FALSE, leveldist=0.15, vertex.size=16,
            vertex.shape="none", vertex.label.cex=0.7) {
-        stopifnot((type=="normal" | type=="jitter" | type=="manualscale"))
-        
-        x <- content2list(x)    
-        
-        if (type=="normal") {
-              visualize.treedata(x=x,
-                                 all=all,
-                                 vertex.size=vertex.size,
-                                 vertex.shape=vertex.shape,
-                                 vertex.label.cex=vertex.label.cex)
-        }
-        
-        if (type=="jitter") {
-              visualize.treedata.jitter(x=x,
-                                        char.lim=char.lim,
-                                        leveldist=leveldist,
-                                        all=all,
-                                        vertex.size=vertex.size,
-                                        vertex.shape=vertex.shape,
-                                        vertex.label.cex=vertex.label.cex)
-        }
-        
-        if (type=="manualscale") {
-              visualize.treedata.manual(x=x,
-                                        all=all,
-                                        vertex.size=vertex.size,
-                                        vertex.shape=vertex.shape,
-                                        vertex.label.cex=vertex.label.cex)
-        }
-  }
+            
+            stopifnot((type=="normal" | type=="jitter" | type=="manualscale"))
+            
+            x <- content2list(x)    
+            
+            if (type=="normal") {
+                  visualize.treedata(x=x,
+                                     all=all,
+                                     vertex.size=vertex.size,
+                                     vertex.shape=vertex.shape,
+                                     vertex.label.cex=vertex.label.cex)
+            }
+            
+            if (type=="jitter") {
+                  visualize.treedata.jitter(x=x,
+                                            char.lim=char.lim,
+                                            leveldist=leveldist,
+                                            all=all,
+                                            vertex.size=vertex.size,
+                                            vertex.shape=vertex.shape,
+                                            vertex.label.cex=vertex.label.cex)
+            }
+            
+            if (type=="manualscale") {
+                  visualize.treedata.manual(x=x,
+                                            all=all,
+                                            vertex.size=vertex.size,
+                                            vertex.shape=vertex.shape,
+                                            vertex.label.cex=vertex.label.cex)
+            }
+      }
 
 
 # set plot method
 setMethod(f = "plot",
           signature = "apidata",
           definition = plot.apidata
-)
+          )
+

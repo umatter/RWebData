@@ -12,23 +12,21 @@
 ##' get("disq", pos="apikeys")
 
 
-saveAPIkey <- 
-  function(key.var, key) {
-    stopifnot(is.character(key.var), is.character(key))
-    
-    if ("apikeys" %in% search()) {
-      
-      assign(key.var, key, pos="apikeys")
-      
-    } else {
-      
-      # apikeys <- new.env(parent=.GlobalEnv) # does not seem to work from within a function, alternative:
-      apikeys <- list()
-      attach(apikeys)
-      assign(key.var, key, pos="apikeys")
-      
-    }
-    
-    cat(paste0("API-key saved in ", key.var, "."))
-    
-  }
+saveAPIkey <-
+      function(key.var, key) {
+            stopifnot(is.character(key.var), is.character(key))
+            
+            if ("apikeys" %in% search()) {
+                  
+                  assign(key.var, key, pos="apikeys")
+                  
+                  } else {
+                        
+                        # apikeys <- new.env(parent=.GlobalEnv) # does not seem to work from within a function, alternative:
+                        apikeys <- list()
+                        attach(apikeys)
+                        assign(key.var, key, pos="apikeys")
+                  }
+            
+            cat(paste0("API-key saved in ", key.var, "."))
+      }

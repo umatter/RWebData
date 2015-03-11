@@ -32,7 +32,6 @@ redlist <-
                         x <- do.call("c", x)
                   }
                   return(x)
-                  
                   } else {
                         return(x)
                   }

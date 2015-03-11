@@ -14,12 +14,10 @@
 
 
 YAMLtoDataFrame <-
-  function(x) {
-    
-    x.list <- yaml.load(x)
-    x.vector <- flattenTree(x.list)
-    x.df <- auto.tree2flat(x.vector, primary.key.name="RwebAPI_ID", primary.key="a")
-    
-    return(x.df)
-    
-  }
+      function(x) {
+            x.list <- yaml.load(x)
+            x.vector <- flattenTree(x.list)
+            x.df <- auto.tree2flat(x.vector, primary.key.name="RwebAPI_ID", primary.key="a")
+            
+            return(x.df)
+      }

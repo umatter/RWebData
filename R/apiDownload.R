@@ -27,59 +27,55 @@
 
 
 apiDownload <-
-function(x, chunksize=50, pause=0, backupfile="apiDL.list.Rdata", unify=TRUE, shortnames=FALSE, progress="bar", ... ) {
-    stopifnot((unlist(lapply(x,is.apirequest))|is.character(x)))
-    
-    if (all(is.character(x))) {x <- lapply(x,url2apirequest)}
-    
-    # to be extended/reconsidered:
-    # check whether requests are all for the same API method
-    # this could later on be changed into a warning and the function extended to handling
-    # requests for different API methods separately
-#     servers <- unique(unlist(lapply(x, FUN=function(i){i@server})))
-#     if (length(servers)>1) stop("x contains apirequest-objects for more than one request-method.")
-    
-    response.list <- saveDL(request.function=mapiDatalight,
-                            request.id=x,
-                            chunksize=chunksize,
-                            pause=pause,
-                            backupfile=backupfile,
-                            progress=progress,
-                            ...)
-    
-    response.list2 <- unlist(response.list, recursive=FALSE)
-    
-    if (length(response.list2)==length(x)) {# only one df per request as response? simply rbind all dfs
+function(x, chunksize=50, pause=0, backupfile="apiDL.list.Rdata", 
+         unify=TRUE, shortnames=FALSE, progress="bar", ... ) {
       
-      response.list <- redlist(response.list)
-      if(is.list(response.list[[1]])) response.list <- unlist(response.list, recursive=FALSE)
-      response <- dfList(response.list)
+      stopifnot((unlist(lapply(x,is.apirequest))|is.character(x)))
+      
+      if (all(is.character(x))) {x <- lapply(x,url2apirequest)}
+      
+      # to be extended/reconsidered:
+      # check whether requests are all for the same API method
+      # this could later on be changed into a warning and the function extended to handling
+      # requests for different API methods separately
+      #     servers <- unique(unlist(lapply(x, FUN=function(i){i@server})))
+      #     if (length(servers)>1) stop("x contains apirequest-objects for more than one request-method.")
+      
+      response.list <- saveDL(request.function=mapiDatalight,
+                              request.id=x,
+                              chunksize=chunksize,
+                              pause=pause,
+                              backupfile=backupfile,
+                              progress=progress,
+                              ...)
+      
+      response.list2 <- unlist(response.list, recursive=FALSE)
+      
+      if (length(response.list2)==length(x)) {# only one df per request as response? simply rbind all dfs
+            
+            response.list <- redlist(response.list)
+            if(is.list(response.list[[1]])) response.list <- unlist(response.list, recursive=FALSE)
+            response <- dfList(response.list)
+            
+            } else { # several dfs per request as response? rbind dfs with same name separately
+                  dfnames <- names(response.list2)
+                  udfnames <- unique(dfnames)
+                  n <- length(response.list2)
+                  response <- list()
+                  
+                  for (i in udfnames) {
+                        ldfs <- response.list2[dfnames %in% i]
+                        i.response <- dfList(ldfs)
+                        
+                        response[[i]] <- i.response
+                  }
+            }
+      
+      # cosmetics...
+      if (unify==TRUE) {response <- unifyDataframes_all(response)}
+      if (shortnames==TRUE) {response <- lapply(response, onlyLeafnames)}
       
       
-    } else { # several dfs per request as response? rbind dfs with same name separately
-      
-      dfnames <- names(response.list2)
-      udfnames <- unique(dfnames)
-      n <- length(response.list2)
-      
-      response <- list()
-      for (i in udfnames) {
-        
-        ldfs <- response.list2[dfnames %in% i]
-        i.response <- dfList(ldfs)
-        
-        response[[i]] <- i.response
-        
-      }
-      
-    }
-    
-    # cosmetics...
-    if (unify==TRUE) {response <- unifyDataframes_all(response)}
-    if (shortnames==TRUE) {response <- lapply(response, onlyLeafnames)}
-    
-    
-    return(response)
-    
-    
-    }
+      return(response)
+
+}
