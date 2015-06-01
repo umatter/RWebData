@@ -4,7 +4,7 @@
 \alias{apiDownload}
 \title{Download and transform data from a web API}
 \usage{
-apiDownload(x, chunksize=50, pause=0, backupfile="apiDL.list.Rdata", unify=TRUE,
+apiDownload(x, chunksize=50, pause=0, backupfile="apiDL.list.Rdata",
 shortnames=FALSE, progress="bar", ...)
 }
 \arguments{
@@ -14,24 +14,28 @@ shortnames=FALSE, progress="bar", ...)
 
 \item{pause}{numeric, the number of seconds the download process should be paused after each request (default is 0)}
 
-\item{backupfile}{character string with the path/name of the backup-file where the data should be saved batchwise during the download process.}
+\item{backupfile}{character string with the path/name of the backup-file where the data should
+be saved batchwise during the download process.}
 
-\item{unify}{logical, indicating whether the resulting tables (data frames) should be unified (default is TRUE, see unifyDataframes())}
+\item{shortnames}{logical, indicating whether the resulting tables (data frames) should have
+short variable names (default is FALSE, variable names contain nesting hierarchy)}
 
-\item{shortnames}{logical, indicating whether the resulting tables (data frames) should have short variable names (default is FALSE, variable names contain nesting hierarchy)}
+\item{progress,}{either character "bar" (indicates progress with a progress-bar), "text"
+(textual indication of progress)}
 
-\item{progress,}{either character "bar" (indicates progress with a progress-bar), "text" (textual indication of progress)}
-
-\item{...}{currently only one parameter (simplify) passed down to the mapping algorithm if simplify is TRUE, the document tree is made simpler if possible (by removing unnecessary nodes)}
+\item{...}{currently only one parameter (simplify) passed down to the mapping algorithm if
+simplify is TRUE, the document tree is made simpler if possible (by removing unnecessary nodes)}
 }
 \value{
-either one  data frame or a list containing several data.frames into which the tree structured web-data has been transformed.
+either one  data frame or a list containing several data.frames into which the tree
+structured web-data has been transformed.
 }
 \description{
 A high-level function that automates the querying and extraction of data for multiple apirequest objects.
 }
 \details{
-The core of the function is based on mapiDatalight(). However, it is specifically designed for the processing of various requests and a save download of the data.
+The core of the function is based on mapiDatalight(). However, it is specifically
+designed for the processing of various requests and a save download of the data.
 the requests are split up in batches and saved batchwise on disk during the download process.
 }
 \examples{

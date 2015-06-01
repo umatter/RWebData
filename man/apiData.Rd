@@ -4,14 +4,17 @@
 \alias{apiData}
 \title{Query data from an API}
 \usage{
-apiData(x, shortnames=FALSE)
+apiData(x, shortnames=FALSE, method="RWebData", alignVariables=FALSE)
 }
 \arguments{
 \item{x}{an apirequest object}
 
-\item{shortnames}{logical, indicating whether the resulting tables (data frames) should have short variable names (default is FALSE, variable names contain nesting hierarchy)}
+\item{shortnames}{logical, indicating whether the resulting tables (data frames) should have
+short variable names (default is FALSE, variable names contain nesting hierarchy)}
 
-\item{method}{character, either "RwebAPI", "jsonlite", or "XML2R"}
+\item{method}{character, either "RWebData", "jsonlite", or "XML2R"}
+
+\item{alignVariables}{logical, indicating whether variables/values should be rearranged in case the raw data was malformed (missing variable names)}
 }
 \value{
 an apidata-object containing the returned data in a flat representation

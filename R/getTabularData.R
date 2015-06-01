@@ -1,33 +1,32 @@
-##' Directly interact with any API
+##' Get web data in tabular form (data frames)
 ##' 
-##'  A high-level function that directly queries and transforms data from any web API. 
-##' @usage apiEasyData(x, base.url, shortnames=TRUE, ...)
+##'  A high-level function that directly queries and transforms data from any web API to a data frame or list of data frames. 
+##' @usage getTabularData(x, base.url, shortnames=TRUE, alignVariables=FALSE)
 ##' @param x either a charachter string containing the whole url for the request or a named list 
 ##' containing the parameter names and values (see details)
 ##' @param base.url a character string containing the basic url for the api
 ##' @param shortnames logical, indicating whether the resulting tables (data frames) should have 
 ##' short variable names (default is FALSE, variable names contain nesting hierarchy)
-##' @param ... currently only one parameter (simplify) passed down to the mapping algorithm if 
-##' simplify is TRUE, the document tree is made simpler if possible (by removing unnecessary nodes)
+##' @param alignVariables logical, indicating whether variables/values should be rearranged in case the raw data was malformed (missing variable names)
 ##' @return a list of data-frames, containing the returned data in a flat representation
 ##' @import stringr
-##' @import jsonlite
 ##' @import XML
 ##' @import igraph
 ##' @import RCurl
-##' @import RJSONIO
+##' @importFrom jsonlite fromJSON validate
 ##' @import plyr
 ##' @import XML2R
 ##' @import httr
 ##' @import mime
 ##' @import yaml
+##' @import methods
 ##' @export
 ##' @examples
-##' \dontrun{apidata <- apiEasyData(x) }
+##' \dontrun{apidata <- getTabularData(x) }
 
 
-apiEasyData <-
-      function(x, base.url, shortnames=TRUE, ...) {
+getTabularData <-
+      function(x, base.url, shortnames=TRUE, alignVariables=FALSE) {
             stopifnot( (is.list(x) | is.character(x)))
             
             if (is.list(x)) {
@@ -35,7 +34,7 @@ apiEasyData <-
                   
                   reqfun <- apiRequestFunction(x=x, base.url=base.url)
                   req <- reqfun()
-                  data <- apiDatalight(req, ...)
+                  data <- apiDatalight(req, alignVariables)
                   
                   # cosmetics
                   if (shortnames==TRUE) {
@@ -50,7 +49,7 @@ apiEasyData <-
             } else { # url as input? simple procedure with less information in api-objects
                   
                   req <- url2apirequest(x)
-                  data <- apiDatalight(req, ...)
+                  data <- apiDatalight(req, alignVariables)
                   
                   # cosmetics
                   if (shortnames==TRUE) {

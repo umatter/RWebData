@@ -52,7 +52,6 @@ loveBalance:
 
 loveCriteria: 
   !!omap
-    - looks: 1
     - character: 2
     - looks: 3 # yes i am shallow
     - cute accent: 4

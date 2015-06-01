@@ -1,11 +1,12 @@
 ##' Query data from an API
 ##' 
 ##'  A high-level function that automates the querying and extraction of data from a web API.
-##' @usage apiData(x, shortnames=FALSE)
+##' @usage apiData(x, shortnames=FALSE, method="RWebData", alignVariables=FALSE)
 ##' @param x an apirequest object
 ##' @param shortnames logical, indicating whether the resulting tables (data frames) should have 
 ##' short variable names (default is FALSE, variable names contain nesting hierarchy)
-##' @param method character, either "RwebAPI", "jsonlite", or "XML2R"
+##' @param method character, either "RWebData", "jsonlite", or "XML2R"
+##' @param alignVariables logical, indicating whether variables/values should be rearranged in case the raw data was malformed (missing variable names)
 ##' @return an apidata-object containing the returned data in a flat representation
 ##' @export
 ##' @examples
@@ -13,9 +14,9 @@
 
 
 apiData <-
-function(x, shortnames=FALSE, method="RwebAPI") {
+function(x, shortnames=FALSE, method="RWebData", alignVariables=FALSE) {
 	stopifnot((is.character(x) |is.apirequest(x)), 
-		(method=="RwebAPI" | method=="XML2R" | method=="jsonlite")
+		(method=="RWebData" | method=="XML2R")
 		 )
 	
 	if (is.character(x)) {
@@ -45,44 +46,45 @@ function(x, shortnames=FALSE, method="RwebAPI") {
 	}
 	
 	# query API and manage response
-	apiresp <- apiGET(x)
+	apiresponse <- apiGET(x)
       
-      if (apirespOK(apiresp)) {
-            if (method=="RwebAPI") {
-                  nestedlistdata <- content2list(apiresp)
-                  flatdata <- auto.tree2flat(nestedlistdata)
+      if (apiresponseOK(apiresponse)) {
+            if (method=="RWebData") {
+                  nestedlistdata <- content2list(apiresponse)
+                  flatdata <- listToDataFrame(nestedlistdata, alignVariables)
                   flatdata <- lapply(flatdata, cbindFill, inputargs )
                   flatdata <- lapply(flatdata, cleanFlatdata)
-                  } else if (method=="XML2R" & grepl(pattern="xml", apiresp@type)){
-                        flatdata <- xml2r(apiresp@body)
+                  } else if (method=="XML2R" & grepl(pattern="xml", apiresponse@type)){
+                        flatdata <- xml2r(apiresponse@body)
                         flatdata <- lapply(flatdata, cbindFill, inputargs )
                         flatdata <- lapply(flatdata, cleanFlatdata)
                         flatdata <- lapply(flatdata, FUN=function(i) { i[,names(i)!="url_key"] })
                   }
             
-            if (shortnames==TRUE) flatdata <- lapply(flatdata, onlyLeafnames)
+            if (shortnames==TRUE){
+                  flatdata <- lapply(flatdata, onlyLeafnames)
+            }
             
             apidata <- new(Class="apidata", 
                            data=flatdata, 
-                           raw.data=apiresp@body, 
-                           raw.type=apiresp@type, 
-                           request.statusMessage=apiresp@statusMessage,
-                           request.arguments=apiresp@request.arguments)
+                           raw.data=apiresponse@body, 
+                           raw.type=apiresponse@type, 
+                           request.statusMessage=apiresponse@statusMessage,
+                           request.arguments=apiresponse@request.arguments)
             
             return(apidata)
             
             } else {
                   
-                  flatdata <- handleHTTPError(apiresp)
-                  flatdata <- lapply(flatdata, cbindFill, inputargs )
-                  flatdata <- lapply(flatdata, cleanFlatdata)
+                  flatdata <- handleHTTPError(apiresponse)
+                  flatdata <- list(cbind(flatdata, inputargs))
                   
                   apidata <- new(Class = "apidata",
                                  data = list(flatdata),
-                                 raw.data=apiresp@body, 
-                                 raw.type=apiresp@type, 
-                                 request.statusMessage=apiresp@statusMessage,
-                                 request.arguments=apiresp@request.arguments)
+                                 raw.data=apiresponse@body, 
+                                 raw.type=apiresponse@type, 
+                                 request.statusMessage=apiresponse@statusMessage,
+                                 request.arguments=apiresponse@request.arguments)
                   
                   return(apidata)
             }

@@ -1,27 +1,27 @@
-##' Describe tree-structured data
-##' 
-##'  Returns a data frame describing the structure of tree structured data with rows for each data
-##'  value (leaf) and columns for each node-level.
-##' @usage treeStructureDF(x, check.nodenames=FALSE)
-##' @param x either a nested list, a named character vector, or a data frame with one row
-##' representing tree-structured data
-##' @param check.nodenames logical, indicating whether potentially ambigious nodenames should be
-##' changed (default is FALSE; see details for more info)
-##' @return a data frame describing the structure of tree structured data with rows for each data
-##' value (leaf) and columns for each node-level.
-##' @details If check.nodenames=TRUE, the function attempts to change the names of child nodes
-##' that either also show up as parent nodes higher in the hierarchy or show up as children of
-##' other parent nodes on the same hierarchy level.
-##' @examples
-##' f <-  system.file("exampleData", "catalog.xml",  package = "XML") # from package XML
-##' doc  <-  xmlInternalTreeParse(f)
-##' xlist <- xmlToList(doc)
-##' xdf <- flattenTree(xlist)
-##' xch <- as.character(t(xdf))
-##' names(xch) <- names(xdf)
-##' treeStructureDF(xdf)
-##' treeStructureDF(xlist)
-##' treeStructureDF(xch)
+## Describe tree-structured data
+## 
+##  Returns a data frame describing the structure of tree structured data with rows for each data
+##  value (leaf) and columns for each node-level.
+## @usage treeStructureDF(x, check.nodenames=FALSE)
+## @param x either a nested list, a named character vector, or a data frame with one row
+## representing tree-structured data
+## @param check.nodenames logical, indicating whether potentially ambigious nodenames should be
+## changed (default is FALSE; see details for more info)
+## @return a data frame describing the structure of tree structured data with rows for each data
+## value (leaf) and columns for each node-level.
+## @details If check.nodenames=TRUE, the function attempts to change the names of child nodes
+## that either also show up as parent nodes higher in the hierarchy or show up as children of
+## other parent nodes on the same hierarchy level.
+## @examples
+## f <-  system.file("exampleData", "catalog.xml",  package = "XML") # from package XML
+## doc  <-  xmlInternalTreeParse(f)
+## xlist <- xmlToList(doc)
+## xdf <- flattenTree(xlist)
+## xch <- as.character(t(xdf))
+## names(xch) <- names(xdf)
+## treeStructureDF(xdf)
+## treeStructureDF(xlist)
+## treeStructureDF(xch)
 
 
 treeStructureDF <-
@@ -62,7 +62,6 @@ treeStructureDF <-
             
             
             if (check.nodenames==TRUE){     # Check whether same nodes occur on different levels, add parent name to duplicated node names to avoid ambiguity (especially with respect to visualization)
-                  # NOTE: THIS STEP MIGHT INTERFERE WITH THE EXTRACTION ALGORITHMS: MAKE SURE ALL DEPENDING FUNCTIONS STILL WORK!
                   
                   for (i in (length(nodes.df)-1):2) {
                         
@@ -71,12 +70,16 @@ treeStructureDF <-
                         
                         for (j in length(nodes.df):jstart) {
                               
-                              u.level.j <- unique(nodes.df[,j])
-                              
-                              # rename lower level node names if duplicated with higher level
-                              j.duplicated <- na.omit(u.level.j[u.level.j %in% u.level.i])        
-                              nodes.df[nodes.df[,j] %in% j.duplicated ,j] <- paste0(nodes.df[nodes.df[,j] %in% j.duplicated ,i],nodes.df[nodes.df[,j] %in% j.duplicated ,j])
-                              
+                              if (j<=ncol(nodes.df)) {
+                                    
+                                    u.level.j <- unique(nodes.df[,j])
+                                    
+                                    # rename lower level node names if duplicated with higher level
+                                    j.duplicated <- na.omit(u.level.j[u.level.j %in% u.level.i])        
+                                    nodes.df[nodes.df[,j] %in% j.duplicated ,j] <- paste0(nodes.df[nodes.df[,j] %in% j.duplicated ,i],nodes.df[nodes.df[,j] %in% j.duplicated ,j])
+                                    
+                              }
+
                               } # end inner loop
                         
                         } # end outer loop
@@ -84,16 +87,19 @@ treeStructureDF <-
                   for (i in 2:(length(nodes.df)-1)) { # change names of childnodes that are on the same level but have different parents
                         
                         j <- i+1
-                        
-                        u.ij <- unique(nodes.df[,c(i,j)])
-                        u.ij <- na.omit(u.ij)
-                        
-                        dupl.j <- u.ij[duplicated(u.ij[,2]),2]
-                        row.dupl.j <-  row.names(u.ij[(u.ij[,2] %in% dupl.j ),])
-                        
-                        if (length(row.dupl.j) > 0) { # found any duplicated node names? if so, change the name
-                              nodes.df[row.dupl.j, j ] <- paste0(nodes.df[row.dupl.j, i ] ,nodes.df[row.dupl.j, j ])
+                        if (j<=ncol(nodes.df)) {
+                              u.ij <- unique(nodes.df[,c(i,j)])
+                              u.ij <- na.omit(u.ij)
+                              
+                              dupl.j <- u.ij[duplicated(u.ij[,2]),2]
+                              row.dupl.j <-  row.names(u.ij[(u.ij[,2] %in% dupl.j ),])
+                              
+                              if (length(row.dupl.j) > 0) { # found any duplicated node names? if so, change the name
+                                    nodes.df[row.dupl.j, j ] <- paste0(nodes.df[row.dupl.j, i ] ,nodes.df[row.dupl.j, j ])
+                              }
                         }
+                        
+ 
                   }
             } # end checknames
             

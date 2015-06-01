@@ -12,13 +12,16 @@ key.object=NA, .vectorizeIt=FALSE)
 
 \item{base.url}{a character string containing the host url of the api.}
 
-\item{multiparam}{a character string with the name of a parameter that can take multiple input values in the resulting function  (defaults to NULL).}
+\item{multiparam}{a character string with the name of a parameter that can take multiple input
+values in the resulting function  (defaults to NULL).}
 
 \item{key.param}{a character string containing the api key parameter required in the url.}
 
 \item{key.object}{the name of the object the api.key is saved in (as character).}
 
-\item{.vectorizeIt}{logical, indicating whether the resulting function should contain an implicit loop over parameters with no default value (i.e., allows vectors as inputs). Default is FALSE. TRUE only works if x is a data frame.}
+\item{.vectorizeIt}{logical, indicating whether the resulting function should contain an
+implicit loop over parameters with no default value (i.e., allows vectors as inputs).
+Default is FALSE. TRUE only works if x is a data frame.}
 }
 \value{
 a function
@@ -27,7 +30,10 @@ a function
 A function that generates a function to send specific API-requests and handle the returned data.
 }
 \details{
-x should contain the parameter names in the first column and respective default-values in the second column (both as character strings) Parameters that have no default value have NAs in the second column.The function attempts to get the api-key from the environment "apikeys" (therefore has to be defined there before; see saveAPIkey()).
+x should contain the parameter names in the first column and respective default-values
+ in the second column (both as character strings) Parameters that have no default value have NAs
+ in the second column.The function attempts to get the api-key from the environment "apikeys"
+ (therefore has to be defined there before; see saveAPIkey()).
 }
 \examples{
 # First, make sure the necessary API key is saved in your R session:

@@ -1,15 +1,13 @@
 ##' Download and transform data from a web API
 ##' 
 ##' A high-level function that automates the querying and extraction of data for multiple apirequest objects.
-##' @usage apiDownload(x, chunksize=50, pause=0, backupfile="apiDL.list.Rdata", unify=TRUE, 
+##' @usage apiDownload(x, chunksize=50, pause=0, backupfile="apiDL.list.Rdata", 
 ##' shortnames=FALSE, progress="bar", ...)
 ##' @param x a list of apirequest objects
 ##' @param chunksize numeric, the size (number of requests) that should be processed in one batch (default is 50)
 ##' @param pause numeric, the number of seconds the download process should be paused after each request (default is 0)
 ##' @param backupfile character string with the path/name of the backup-file where the data should 
 ##' be saved batchwise during the download process.
-##' @param unify logical, indicating whether the resulting tables (data frames) should be unified 
-##' (default is TRUE, see unifyDataframes())
 ##' @param shortnames logical, indicating whether the resulting tables (data frames) should have 
 ##' short variable names (default is FALSE, variable names contain nesting hierarchy)
 ##' @param progress, either character "bar" (indicates progress with a progress-bar), "text" 
@@ -27,8 +25,8 @@
 
 
 apiDownload <-
-function(x, chunksize=50, pause=0, backupfile="apiDL.list.Rdata", 
-         unify=TRUE, shortnames=FALSE, progress="bar", ... ) {
+function(x, chunksize=50, pause=0, backupfile="apiDL.list.Rdata",
+         shortnames=FALSE, progress="bar", ... ) {
       
       stopifnot((unlist(lapply(x,is.apirequest))|is.character(x)))
       
@@ -72,7 +70,6 @@ function(x, chunksize=50, pause=0, backupfile="apiDL.list.Rdata",
             }
       
       # cosmetics...
-      if (unify==TRUE) {response <- unifyDataframes_all(response)}
       if (shortnames==TRUE) {response <- lapply(response, onlyLeafnames)}
       
       

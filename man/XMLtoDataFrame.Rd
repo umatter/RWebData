@@ -4,10 +4,12 @@
 \alias{XMLtoDataFrame}
 \title{Extract the data from a XML document as one (or several) data frame(s)}
 \usage{
-XMLtoDataFrame(x)
+XMLtoDataFrame(x, alignVariables=FALSE)
 }
 \arguments{
 \item{x}{a string with the path of a XML document}
+
+\item{alignVariables}{logical, indicating whether variables/values should be rearranged in case the raw data was malformed (missing variable names)}
 }
 \value{
 one data frame or a list of several data frames
@@ -22,7 +24,7 @@ The data extraction algorithm applied in this function partly relies on a nested
          Several attributes of the same tag will, however, be collected in the same data-frame column.
 }
 \examples{
-XML.ex <- system.file("exdata", "XML_fiction.xml", package = "RwebAPI")
-XMLtoDataFrame(XML.ex)
+XML.ex <- system.file("exdata", "XML_fiction.xml", package = "RWebData")
+XMLtoDataFrame(XML.ex, alignVariables=FALSE)
 }
 

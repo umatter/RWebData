@@ -8,7 +8,6 @@
 ##' @examples
 ##' \dontrun{apidata <- apiData(x) # only works with a proper PVS API key}
 ##' \dontrun{getdata(apidata)}
-##' 
 
 
 getdata <-

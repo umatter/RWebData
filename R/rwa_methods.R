@@ -1,5 +1,5 @@
 ##########################
-# Rwebapi METHODS
+# RWebData METHODS
 ##########################
 
 
@@ -61,12 +61,12 @@ setMethod(f = "show",
 
 
 #------------------------------------
-# print method for class APIRESP
+# print method for class APIRESPONSE
 #------------------------------------
 
 
 # definition of the print function
-print.apiresp <-
+print.apiresponse <-
       function(x) {
             type <- x@type
             sm <- x@statusMessage
@@ -81,20 +81,20 @@ print.apiresp <-
 
 # print method
 setMethod(f = "print",
-          signature = "apiresp",
-          definition = print.apiresp
+          signature = "apiresponse",
+          definition = print.apiresponse
           )
 
 
 
 
 #------------------------------------
-# show method for class APIRESP
+# show method for class apiresponse
 #------------------------------------
 
 
 # definition of the print function
-show.apiresp <-
+show.apiresponse <-
       function(object) {
             type <- object@type
             sm <- object@statusMessage
@@ -110,8 +110,8 @@ show.apiresp <-
 
 # print method
 setMethod(f = "show",
-          signature = "apiresp",
-          definition = show.apiresp
+          signature = "apiresponse",
+          definition = show.apiresponse
           )
 
 
@@ -119,12 +119,12 @@ setMethod(f = "show",
 
 
 #------------------------------------
-# summary method for class APIRESP
+# summary method for class apiresponse
 #------------------------------------
 
 
 # definition of the print function
-summary.apiresp <-
+summary.apiresponse <-
       function(object){
             x.list <- content2list(object)
             elementlist <- listElements(x.list, na.omit=TRUE)
@@ -142,7 +142,7 @@ summary.apiresp <-
             exd <- max(nchar(levelnames)) + ind +1 # indentation next paragraph
             levelsummaries <- str_wrap(levelsummaries, width=100, indent=ind, exdent=exd)
             
-            s <- new(Class="sapiresp",
+            s <- new(Class="sapiresponse",
                      summary=list(levelsummaries, levelnames),
                      raw.type=object@type,
                      statusMessage=object@statusMessage)
@@ -154,20 +154,20 @@ summary.apiresp <-
 
 
 # summary method
-setMethod(f = "summary", signature="apiresp",
-          definition = summary.apiresp
+setMethod(f = "summary", signature="apiresponse",
+          definition = summary.apiresponse
 )
 
 
 
 
 #----------------------------------------
-# print method for class SUMMARY.APIRESP
+# print method for class SUMMARY.apiresponse
 #----------------------------------------
 
 
 # definition of the print function
-print.summary.apiresp <- 
+print.summary.apiresponse <- 
       function(x) {
             type <- x@raw.type
             sm <- x@statusMessage
@@ -190,18 +190,18 @@ print.summary.apiresp <-
 
 # print method
 setMethod(f = "print",
-          signature = "sapiresp",
-          definition = print.summary.apiresp
+          signature = "sapiresponse",
+          definition = print.summary.apiresponse
           )
 
 
 #------------------------------------
-# show method for class SUMMARY.APIRESP
+# show method for class SUMMARY.apiresponse
 #------------------------------------
 
 
 # definition of the print function
-show.summary.apiresp <- 
+show.summary.apiresponse <- 
       function(object) {
             type <- object@raw.type
             sm <- object@statusMessage
@@ -225,18 +225,18 @@ show.summary.apiresp <-
 
 # set show method
 setMethod(f = "show",
-          signature = "sapiresp",
-          definition = show.summary.apiresp
+          signature = "sapiresponse",
+          definition = show.summary.apiresponse
           )
 
 
 
 #------------------------------------
-# plot method for class APIRESP
+# plot method for class apiresponse
 #------------------------------------
 
 # method definition
-plot.apiresp <-
+plot.apiresponse <-
       function(x, type="normal", char.lim=8, all=FALSE, leveldist=0.15, vertex.size=16,
            vertex.shape="none", vertex.label.cex=0.7, ...) {
             stopifnot((type=="normal" | type=="jitter" | type=="manualscale"))
@@ -275,8 +275,8 @@ plot.apiresp <-
 
 # set plot method
 setMethod(f = "plot",
-          signature = "apiresp",
-          definition = plot.apiresp
+          signature = "apiresponse",
+          definition = plot.apiresponse
 )
 
 

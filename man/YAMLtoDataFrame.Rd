@@ -4,10 +4,12 @@
 \alias{YAMLtoDataFrame}
 \title{Extract the data from a YAML document as one (or several) data frame(s)}
 \usage{
-YAMLtoDataFrame(x)
+YAMLtoDataFrame(x, alignVariables=FALSE)
 }
 \arguments{
 \item{x}{either a string containing YAML or the name of a file containing the YAML}
+
+\item{alignVariables}{logical, indicating whether variables/values should be rearranged in case the raw data was malformed (missing variable names)}
 }
 \value{
 one data frame or a list of several data frames
@@ -17,8 +19,7 @@ Given YAML document, this function maps the potentially nested YAML data to one 
 The data extraction algorithm applied in this function is based on the assumption that the YAML document describes either one or several entity types containing a set of observations described by different variables.
 }
 \examples{
-system.file("exdata", "YAML_fiction.yaml", package = "RwebAPI")
-yaml.ex <- system.file("exdata", "YAML_fiction.yaml", package = "RwebAPI")
-YAMLtoDataFrame(yaml.ex)
+yaml.ex <- system.file("exdata", "YAML_fiction.yml", package = "RWebData")
+YAMLtoDataFrame(yaml.ex, alignVariables=FALSE)
 }
 

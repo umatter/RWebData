@@ -1,20 +1,19 @@
-##' Query data from an API
-##' 
-##'  A high-level function that automates the querying and extraction of data from a web API. Unlike
-##'  apiData(), only the pure data is returned.
-##' @usage apiDatalight(x, ...)
-##' @param x an apirequest object
-##' @param ... currently only one parameter (simplify) passed down to the mapping algorithm if 
-##' simplify is TRUE, the document tree is made simpler if possible (by removing unnecessary nodes)
-##' @return a list containing the returned data in a flat representation
-##' @export
-##' @examples
-##' \dontrun{apidata <- apiDatalight(x)}
+## Query data from an API
+## 
+##  A high-level function that automates the querying and extraction of data from a web API. Unlike
+##  apiData(), only the pure data is returned.
+## @usage apiDatalight(x)
+## @param x an apirequest object
+## @param alignVariables logical, indicating whether variables/values should be rearranged in case the raw data was malformed (missing variable names)
+## @return a list containing the returned data in a flat representation
+## @export
+## @examples
+## \dontrun{apidata <- apiDatalight(x)}
 
 
 
 apiDatalight <-
-function(x,  ...) {
+function(x, alignVariables) {
       stopifnot((is.apirequest(x) | is.character(x)))
       
       if (is.character(x)) {
@@ -44,11 +43,11 @@ function(x,  ...) {
       }
     
     # query API and manage response
-    apiresp <- apiGET(x)
+    apiresponse <- apiGET(x)
     
-    if (apirespOK(apiresp)) {
-          nestedlistdata <- content2list(apiresp)
-          flatdata <- auto.tree2flat(nestedlistdata, ...)
+    if (apiresponseOK(apiresponse)) {
+          nestedlistdata <- content2list(apiresponse)
+          flatdata <- listToDataFrame(nestedlistdata, alignVariables)
           
           if (length(flatdata)==0){  # if empty, only return the input/query-variables
                 flatdata <- list(inputargs)
@@ -61,9 +60,8 @@ function(x,  ...) {
           return(flatdata)
           
     } else {
-          flatdata <- handleHTTPError(apiresp)
-          flatdata <- lapply(flatdata, cbindFill, inputargs )
-          flatdata <- lapply(flatdata, cleanFlatdata)
+          flatdata <- handleHTTPError(apiresponse)
+          flatdata <- list(cbind(flatdata, inputargs))
           
           return(flatdata)
     }

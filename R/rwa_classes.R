@@ -1,5 +1,5 @@
 ###############################
-# RwebAPI: Classes and Methods
+# RWebData: Classes and Methods
 ###############################
 
 # apirequest, a class for API requests
@@ -11,8 +11,8 @@ setClass("apirequest",
                   ))
 
 
-# apiresp, a class for API responses
-setClass("apiresp",
+# apiresponse, a class for API responses
+setClass("apiresponse",
          slots= c(body = "character",
                   header = "character",
                   type = "character",
@@ -22,8 +22,8 @@ setClass("apiresp",
                   ))
 
 
-# sapiresp, a class for API responses summaries
-setClass("sapiresp",
+# sapiresponse, a class for API responses summaries
+setClass("sapiresponse",
          slots= c(summary="list",
                   raw.type= "character",
                   statusMessage ="character"

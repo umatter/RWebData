@@ -118,7 +118,7 @@ onlyLeafnames <-
 #     x.list <- try(RJSONIO::fromJSON(x, nullValue=NA, simplify=FALSE), silent=TRUE)
 #     if (class(test)=="try-error") {x.list <- .fromJSON_R_NA(x)} # based and dependend on rjson
 #     x.vector <- flattenTree(x.list)
-#     x.df <- auto.tree2flat(x.vector, primary.key.name="RwebAPI_ID", primary.key="a")
+#     x.df <- auto.tree2flat(x.vector, primary.key.name="RWebData_ID", primary.key="a")
 #     
 #     return(x.df)
 # 
@@ -141,239 +141,239 @@ onlyLeafnames <-
 #   }
 
 
-#----------------------------------------------------------------------#
+#----------------------------------------------------------------------
 # .fromJSON_R_NA, .parseValue_NA, .parseNull_NA
 # The following code is taken from the rjson package (Couture-Beil)    
-# and slightly changed for the use in RwebAPI                          
+# and slightly changed for the use in RWebData                         
 # Parses JSON null as NA, not as NULL                                  
-#----------------------------------------------------------------------#
-
-
-.fromJSON_R_NA <- function( json_str ) # changed for RwebAPI use
-{
-  if( !is.character(json_str) )
-    stop( "JSON objects must be a character string" )
-  chars = strsplit(json_str, "")[[1]]
-  tmp <- .parseValue_NA( chars, 1) # changed here for RwebAPI use
-  if( is.null( tmp$incomplete ) )
-    return( tmp$val )
-  else
-    return( NULL )
-}
-
-.parseValue_NA <- function( chars, i ) # changed for RwebAPI use
-{
-  if( i > length( chars ) )
-    return( list( "incomplete" = TRUE ) )
-  
-  #ignore whitespace
-  while( chars[i] == " " || chars[i] == "\t" || chars[i] == "\n" ) {
-    i = i + 1
-    if( i > length( chars ) )
-      return( list( "incomplete" = TRUE ) )
-  }
-  
-  ch = chars[i]
-  if( ch == "{" ) {
-    return( .parseObj( chars, i ) )
-  }
-  if( ch == "[" ) {
-    return( .parseArray( chars, i ) )
-  }
-  if( ch == "\"" ) {
-    return( .parseString_escape( chars, i ) ) # changed for RwebAPI
-  }
-  if( any(grep("[0-9\\-]", ch)) ) {
-    return( rjson:::.parseNumber( chars, i ) )
-  }
-  if( ch == "t" ) {
-    return( rjson:::.parseTrue( chars, i ) )
-  }
-  if( ch == "f" ) {
-    return( rjson:::.parseFalse( chars, i ) )
-  }
-  if( ch == "n" ) {
-    return( .parseNull_NA( chars, i ) ) # changed here for RwebAPI use
-  }
-  #stop("shouldnt reach end of parseValue")
-  
-  err <- paste( "unexpected data:", paste( chars[ i:length(chars)], collapse = "" ) )
-  stop( err )
-}
-
-.parseNull_NA <- function( chars, i )
-{
-  if( paste(chars[i:(i+3)], collapse="") == "null" )
-    return( list(val=NA,size=i+4) ) # changed val=NULL to val=NA for RwebAPI use
-  stop("error parsing null value (maybe the word starts with n but isnt null)")
-}
-
-.parseString_escape <- function( chars, i )
-{
-  str_start = i
-  if( chars[i] != "\"") stop("error")
-  i = i + 1
-  if( i > length( chars ) ) return( list( "incomplete" = TRUE ) )
-  
-  while( TRUE ) {
-    while( chars[i] != "\\" && chars[i] != "\"" ) {
-      i = i + 1
-      if( i > length( chars ) ) return( list( "incomplete" = TRUE ) )
-    }
-    if( chars[i] == "\\" ) {
-      i = i + 2 #skip the next char
-      if( i > length( chars ) ) return( list( "incomplete" = TRUE ) )
-    }
-    else
-      break
-  }
-  str_end = i
-  i = i + 1
-  return(list(
-    val=eval(parse(text=gsub(pattern="\\/", replacement="/", 
-                             x=paste(chars[str_start:str_end], collapse=""), # added for RwebAPI
-                             fixed=TRUE))), 
-    size=i ))
-}
-
-
-.parseObj <- function( chars, i )
-{
-  obj <- list()
-  if( chars[i] != "{" ) stop("error - no openning tag")
-  i = i + 1
-  if( i > length( chars ) ) return( list( "incomplete" = TRUE ) )
-  
-  first_pass <- TRUE
-  while( TRUE ) {
-    
-    #ignore whitespace
-    while( chars[i] == " " || chars[i] == "\t" || chars[i] == "\n" ) {
-      i = i + 1
-      if( i > length( chars ) ) return( list( "incomplete" = TRUE ) )
-    }
-    
-    
-    #look out for empty lists
-    if( chars[i] == "}" && first_pass == TRUE ) {
-      i = i + 1
-      break
-    }
-    first_pass <- FALSE
-    
-    #get key
-    str = .parseString_escape( chars, i ) # changed for RwebAPI
-    if( is.null( str$incomplete ) == FALSE ) return( str )
-    key = str$val
-    i = str$size
-    if( i > length( chars ) ) return( list( "incomplete" = TRUE ) )
-    
-    #ignore whitespace
-    while( chars[i] == " " || chars[i] == "\t" || chars[i] == "\n" ) {
-      i = i + 1
-      if( i > length( chars ) ) return( list( "incomplete" = TRUE ) )
-    }
-    
-    
-    #verify seperater
-    if( chars[i] != ":" ) stop("error - no seperator")
-    i = i + 1
-    if( i > length( chars ) ) return( list( "incomplete" = TRUE ) )
-    
-    
-    #ignore whitespace
-    while( chars[i] == " " || chars[i] == "\t" || chars[i] == "\n" ) {
-      i = i + 1
-      if( i > length( chars ) )
-        return( list( "incomplete" = TRUE ) )
-    }
-    
-    
-    #get value
-    val = .parseValue_NA( chars, i ) # changed for RwebAPI
-    if( is.null( val$incomplete ) == FALSE ) return( val )
-    obj[key] <- list(val$val)
-    i = val$size
-    
-    if( i > length( chars ) ) return( list( "incomplete" = TRUE ) )
-    
-    #ignore whitespace
-    while( chars[i] == " " || chars[i] == "\t" || chars[i] == "\n" ) {
-      i = i + 1
-      if( i > length( chars ) )
-        return( list( "incomplete" = TRUE ) )
-    }
-    
-    if( chars[i] == "}" ) {
-      i = i + 1
-      break
-    }
-    if( chars[i] != "," ) stop("error - no closing tag")
-    i = i + 1
-    if( i > length( chars ) )
-      return( list( "incomplete" = TRUE ) )
-  }
-  return( list(val=obj, size=i) )
-}
-
-
-.parseArray <- function( chars, i )
-{
-  useVect <- TRUE
-  arr <- list()
-  if( chars[i] != "[" ) stop("error - no openning tag")
-  
-  i = i + 1
-  if( i > length( chars ) )
-    return( list( "incomplete" = TRUE ) )
-  
-  while( TRUE ) {
-    
-    #ignore whitespace
-    while( chars[i] == " " || chars[i] == "\t" || chars[i] == "\n" ) {
-      i = i + 1
-      if( i > length( chars ) )
-        return( list( "incomplete" = TRUE ) )
-    }
-    
-    #look out for empty arrays
-    if( chars[i] == "]" ) { 
-      i = i + 1
-      useVect <- FALSE #force an empty list instead of NULL (i.e. value = vector("list",0))
-      break
-    }
-    
-    #get value
-    val = .parseValue_NA( chars, i ) # changed for RwebAPI
-    if( is.null( val$incomplete ) == FALSE ) return( val )
-    arr[length(arr)+1] <- list(val$val)
-    if( is.list(val$val) || length(val$val) > 1 || is.null(val$val) )
-      useVect <- FALSE
-    
-    i = val$size
-    if( i > length( chars ) ) return( list( "incomplete" = TRUE ) )
-    
-    #ignore whitespace
-    while( chars[i] == " " || chars[i] == "\t" || chars[i] == "\n" ) {
-      i = i + 1
-      if( i > length( chars ) )
-        return( list( "incomplete" = TRUE ) )
-    }
-    
-    if( chars[i] == "]" ) { 
-      i = i + 1
-      break
-    }
-    if( chars[i] != "," ) stop("error - no closing tag")
-    i = i + 1
-    if( i > length( chars ) )
-      return( list( "incomplete" = TRUE ) )
-  }
-  if( useVect )
-    arr <- unlist(arr)
-  return( list(val=arr, size=i) )
-}
-
+# #----------------------------------------------------------------------
+# 
+# 
+# .fromJSON_R_NA <- function( json_str ) # changed for RWebDatause
+# {
+#   if( !is.character(json_str) )
+#     stop( "JSON objects must be a character string" )
+#   chars = strsplit(json_str, "")[[1]]
+#   tmp <- .parseValue_NA( chars, 1) # changed here for RWebDatause
+#   if( is.null( tmp$incomplete ) )
+#     return( tmp$val )
+#   else
+#     return( NULL )
+# }
+# 
+# .parseValue_NA <- function( chars, i ) # changed for RWebData use
+# {
+#   if( i > length( chars ) )
+#     return( list( "incomplete" = TRUE ) )
+#   
+#   #ignore whitespace
+#   while( chars[i] == " " || chars[i] == "\t" || chars[i] == "\n" ) {
+#     i = i + 1
+#     if( i > length( chars ) )
+#       return( list( "incomplete" = TRUE ) )
+#   }
+#   
+#   ch = chars[i]
+#   if( ch == "{" ) {
+#     return( .parseObj( chars, i ) )
+#   }
+#   if( ch == "[" ) {
+#     return( .parseArray( chars, i ) )
+#   }
+#   if( ch == "\"" ) {
+#     return( .parseString_escape( chars, i ) ) # changed for RWebData
+#   }
+#   if( any(grep("[0-9\\-]", ch)) ) {
+#     return( rjson:::.parseNumber( chars, i ) )
+#   }
+#   if( ch == "t" ) {
+#     return( rjson:::.parseTrue( chars, i ) )
+#   }
+#   if( ch == "f" ) {
+#     return( rjson:::.parseFalse( chars, i ) )
+#   }
+#   if( ch == "n" ) {
+#     return( .parseNull_NA( chars, i ) ) # changed here for RWebData use
+#   }
+#   #stop("shouldnt reach end of parseValue")
+#   
+#   err <- paste( "unexpected data:", paste( chars[ i:length(chars)], collapse = "" ) )
+#   stop( err )
+# }
+# 
+# .parseNull_NA <- function( chars, i )
+# {
+#   if( paste(chars[i:(i+3)], collapse="") == "null" )
+#     return( list(val=NA,size=i+4) ) # changed val=NULL to val=NA for RWebData use
+#   stop("error parsing null value (maybe the word starts with n but isnt null)")
+# }
+# 
+# .parseString_escape <- function( chars, i )
+# {
+#   str_start = i
+#   if( chars[i] != "\"") stop("error")
+#   i = i + 1
+#   if( i > length( chars ) ) return( list( "incomplete" = TRUE ) )
+#   
+#   while( TRUE ) {
+#     while( chars[i] != "\\" && chars[i] != "\"" ) {
+#       i = i + 1
+#       if( i > length( chars ) ) return( list( "incomplete" = TRUE ) )
+#     }
+#     if( chars[i] == "\\" ) {
+#       i = i + 2 #skip the next char
+#       if( i > length( chars ) ) return( list( "incomplete" = TRUE ) )
+#     }
+#     else
+#       break
+#   }
+#   str_end = i
+#   i = i + 1
+#   return(list(
+#     val=eval(parse(text=gsub(pattern="\\/", replacement="/", 
+#                              x=paste(chars[str_start:str_end], collapse=""), # added for RWebData
+#                              fixed=TRUE))), 
+#     size=i ))
+# }
+# 
+# 
+# .parseObj <- function( chars, i )
+# {
+#   obj <- list()
+#   if( chars[i] != "{" ) stop("error - no openning tag")
+#   i = i + 1
+#   if( i > length( chars ) ) return( list( "incomplete" = TRUE ) )
+#   
+#   first_pass <- TRUE
+#   while( TRUE ) {
+#     
+#     #ignore whitespace
+#     while( chars[i] == " " || chars[i] == "\t" || chars[i] == "\n" ) {
+#       i = i + 1
+#       if( i > length( chars ) ) return( list( "incomplete" = TRUE ) )
+#     }
+#     
+#     
+#     #look out for empty lists
+#     if( chars[i] == "}" && first_pass == TRUE ) {
+#       i = i + 1
+#       break
+#     }
+#     first_pass <- FALSE
+#     
+#     #get key
+#     str = .parseString_escape( chars, i ) # changed for RWebData
+#     if( is.null( str$incomplete ) == FALSE ) return( str )
+#     key = str$val
+#     i = str$size
+#     if( i > length( chars ) ) return( list( "incomplete" = TRUE ) )
+#     
+#     #ignore whitespace
+#     while( chars[i] == " " || chars[i] == "\t" || chars[i] == "\n" ) {
+#       i = i + 1
+#       if( i > length( chars ) ) return( list( "incomplete" = TRUE ) )
+#     }
+#     
+#     
+#     #verify seperater
+#     if( chars[i] != ":" ) stop("error - no seperator")
+#     i = i + 1
+#     if( i > length( chars ) ) return( list( "incomplete" = TRUE ) )
+#     
+#     
+#     #ignore whitespace
+#     while( chars[i] == " " || chars[i] == "\t" || chars[i] == "\n" ) {
+#       i = i + 1
+#       if( i > length( chars ) )
+#         return( list( "incomplete" = TRUE ) )
+#     }
+#     
+#     
+#     #get value
+#     val = .parseValue_NA( chars, i ) # changed for RWebData
+#     if( is.null( val$incomplete ) == FALSE ) return( val )
+#     obj[key] <- list(val$val)
+#     i = val$size
+#     
+#     if( i > length( chars ) ) return( list( "incomplete" = TRUE ) )
+#     
+#     #ignore whitespace
+#     while( chars[i] == " " || chars[i] == "\t" || chars[i] == "\n" ) {
+#       i = i + 1
+#       if( i > length( chars ) )
+#         return( list( "incomplete" = TRUE ) )
+#     }
+#     
+#     if( chars[i] == "}" ) {
+#       i = i + 1
+#       break
+#     }
+#     if( chars[i] != "," ) stop("error - no closing tag")
+#     i = i + 1
+#     if( i > length( chars ) )
+#       return( list( "incomplete" = TRUE ) )
+#   }
+#   return( list(val=obj, size=i) )
+# }
+# 
+# 
+# .parseArray <- function( chars, i )
+# {
+#   useVect <- TRUE
+#   arr <- list()
+#   if( chars[i] != "[" ) stop("error - no openning tag")
+#   
+#   i = i + 1
+#   if( i > length( chars ) )
+#     return( list( "incomplete" = TRUE ) )
+#   
+#   while( TRUE ) {
+#     
+#     #ignore whitespace
+#     while( chars[i] == " " || chars[i] == "\t" || chars[i] == "\n" ) {
+#       i = i + 1
+#       if( i > length( chars ) )
+#         return( list( "incomplete" = TRUE ) )
+#     }
+#     
+#     #look out for empty arrays
+#     if( chars[i] == "]" ) { 
+#       i = i + 1
+#       useVect <- FALSE #force an empty list instead of NULL (i.e. value = vector("list",0))
+#       break
+#     }
+#     
+#     #get value
+#     val = .parseValue_NA( chars, i ) # changed for RWebData
+#     if( is.null( val$incomplete ) == FALSE ) return( val )
+#     arr[length(arr)+1] <- list(val$val)
+#     if( is.list(val$val) || length(val$val) > 1 || is.null(val$val) )
+#       useVect <- FALSE
+#     
+#     i = val$size
+#     if( i > length( chars ) ) return( list( "incomplete" = TRUE ) )
+#     
+#     #ignore whitespace
+#     while( chars[i] == " " || chars[i] == "\t" || chars[i] == "\n" ) {
+#       i = i + 1
+#       if( i > length( chars ) )
+#         return( list( "incomplete" = TRUE ) )
+#     }
+#     
+#     if( chars[i] == "]" ) { 
+#       i = i + 1
+#       break
+#     }
+#     if( chars[i] != "," ) stop("error - no closing tag")
+#     i = i + 1
+#     if( i > length( chars ) )
+#       return( list( "incomplete" = TRUE ) )
+#   }
+#   if( useVect )
+#     arr <- unlist(arr)
+#   return( list(val=arr, size=i) )
+# }
+# 
 
 #------------------------
 # cleanNodenames(x)
@@ -769,7 +769,7 @@ simplifyTree <-
 #---------------------------
 # detectLeafSequence(x)
 # returns the indeces of repeated character sequences in the names of a character vector or a data frame
-# (in the context of Rwebapi: detects the sequence of leaf elements at the lowest hierarchy level)
+# (in the context of RWebData: detects the sequence of leaf elements at the lowest hierarchy level)
 # x a character vector representing the nodes of tree structured data (i.e., only the names of a vector representing the tree structured data, not the values)
 #---------------------------
 
@@ -872,13 +872,13 @@ detectSequence <-
 #---------------------------
 # HTTPstatusMessage(x) 
 # returns the http status code 
-# x an apiresp object
+# x an apiresponse object
 # value: numeric
 #----------------------------
 
 HTTPstatusMessage <-
   function(x){
-    stopifnot(is.apiresp(x))
+    stopifnot(is.apiresponse(x))
     
     message <- x@statusMessage
     
@@ -892,13 +892,13 @@ HTTPstatusMessage <-
 #---------------------------
 # HTTPstatus(x) 
 # returns the http status code 
-# x an apiresp object
+# x an apiresponse object
 # value: numeric
 #----------------------------
 
 HTTPstatus <-
   function(x){
-    stopifnot(is.apiresp(x))
+    stopifnot(is.apiresponse(x))
     
     head <- header(x)
     status <- as.numeric(unname(head["status"]))
@@ -911,13 +911,13 @@ HTTPstatus <-
 
 #---------------------------
 # header(x) 
-# returns the http header of an apiresp object
-# x an apiresp object
+# returns the http header of an apiresponse object
+# x an apiresponse object
 #----------------------------
 
 header <-
   function(x){
-    stopifnot(is.apiresp(x))
+    stopifnot(is.apiresponse(x))
     
     return(x@header)
     
@@ -927,14 +927,14 @@ header <-
 
 #----------------------------
 # handleHTTPError(x)
-# handles apiresp objects in case the HTTP status is not OK
-# x an object of class apiresp
+# handles apiresponse objects in case the HTTP status is not OK
+# x an object of class apiresponse
 # value an object of class apidata
 #----------------------------
 
 handleHTTPError <-
-  function(x) { # if(apirespOK(x)) check this outside of the function --> if ok: process via content2list and auto.tree2flat...
-    stopifnot(is.apiresp(x))           # if not: process with this function 
+  function(x) { # if(apiresponseOK(x)) check this outside of the function --> if ok: process via content2list and auto.tree2flat...
+    stopifnot(is.apiresponse(x))           # if not: process with this function 
     
     
     sm <- HTTPstatusMessage(x)
@@ -1104,7 +1104,8 @@ xml2list <- function(x) {
   stopifnot(is.character(x))
 
   # clean malformed xml (removes any symbols occurring before the xml-document starts)
-  x <- sub(pattern="^(.*?)\\<", replacement="<", x=x)
+  # x <- sub(pattern="^(.*?)\\<", replacement="<", x=x)
+  x <- sub(pattern="^[^<]*<", replacement="<", x=x)
   x <- sub(pattern="^<xml", replacement="<?xml", x=x)
   
   

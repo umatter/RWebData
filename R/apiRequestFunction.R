@@ -22,7 +22,7 @@
 ##' from the environment "apikeys" (therefore has to be defined there before; see saveAPIkey()).
 ##' if x is a list, the parametern names values are provided like in a function call, i.e., 
 ##' list(param1=value.param1, param2=...). 
-##' The option of providing x as a list ist basically implemented for apiEasyData() 
+##' The option of providing x as a list ist basically implemented for getTabularData() 
 ##' (direct individual requests to an API, no vectorization).
 ##' @export
 ##' @examples

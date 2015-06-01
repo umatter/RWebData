@@ -8,28 +8,38 @@ apiRequestFunction(x, base.url, multiparam=NULL, key.param=NA,
  key.object=NA, vectorizeIt=FALSE)
 }
 \arguments{
-\item{x}{a two-column data frame or a named list containing the parameter names and values (see details).}
+\item{x}{a two-column data frame or a named list containing the parameter names and values
+(see details).}
 
 \item{base.url}{a character string containing the basic url for the api.}
 
-\item{multiparam}{a character string with the name of a parameter that can take multiple input values in the resulting function  (defaults to NULL).}
+\item{multiparam}{a character string with the name of a parameter that can take multiple input
+values in the resulting function  (defaults to NULL).}
 
 \item{key.param}{a character string containing the api key parameter required in the url.}
 
 \item{key.object}{the name of the object the api.key is saved in (as character).}
 
-\item{vectorizeIt}{logical, indicating whether the resulting function should contain an implicit loop over parameters with no default value (i.e., allows vectors as inputs). Default is FALSE. TRUE only works if x is a data frame.}
+\item{vectorizeIt}{logical, indicating whether the resulting function should contain an implicit
+loop over parameters with no default value (i.e., allows vectors as inputs). Default is FALSE.
+TRUE only works if x is a data frame.}
 }
 \value{
 an object of class apirequest.
 }
 \description{
-An extended version of generateURLFunction(). The generated function returns an object of class "apirequest".
+An extended version of generateURLFunction(). The generated function returns an object of class
+"apirequest".
 }
 \details{
-x (if a data frame) should contain the parameter names in the first column and respective default-values in the second column (both as character strings). Parameters that have no default value have NAs in the second column.The function attempts to get the api-key from the environment "apikeys" (therefore has to be defined there before; see saveAPIkey()).
-if x is a list, the parametern names values are provided like in a function call, i.e., list(param1=value.param1, param2=...).
-The option of providing x as a list ist basically implemented for apiEasyData() (direct individual requests to an API, no vectorization).
+x (if a data frame) should contain the parameter names in the first column and
+respective default-values in the second column (both as character strings). Parameters that
+have no default value have NAs in the second column.The function attempts to get the api-key
+from the environment "apikeys" (therefore has to be defined there before; see saveAPIkey()).
+if x is a list, the parametern names values are provided like in a function call, i.e.,
+list(param1=value.param1, param2=...).
+The option of providing x as a list ist basically implemented for apiEasyData()
+(direct individual requests to an API, no vectorization).
 }
 \examples{
 # First, make sure the necessary API key is saved in your R session:

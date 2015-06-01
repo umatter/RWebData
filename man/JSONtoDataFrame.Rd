@@ -4,20 +4,25 @@
 \alias{JSONtoDataFrame}
 \title{Extract the data from a JSON document as one (or several) data frame(s)}
 \usage{
-JSONtoDataFrame(x)
+JSONtoDataFrame(x, alignVariables=FALSE)
 }
 \arguments{
 \item{x}{either a string containing JSON or the name of a file containing the JSON}
+
+\item{alignVariables}{logical, indicating whether variables/values should be rearranged in case the raw data was malformed (missing variable names)}
 }
 \value{
 one data frame or a list of several data frames
 }
 \description{
-Given JSON document, this function maps the potentially nested JSON data to one or several data frames.
-The data extraction algorithm applied in this function is based on the assumption that the JSON document describes either one or several entity types containing a set of observations described by different variables.
+Given JSON document, this function maps the potentially nested JSON data to one or several
+data frames.
+The data extraction algorithm applied in this function is based on the assumption that the
+JSON document describes either one or several entity types containing a set of observations
+described by different variables.
 }
 \examples{
-JSON.ex <- system.file("exdata", "JSON_fiction.json", package = "RwebAPI")
-JSONtoDataFrame(JSON.ex)
+JSON.ex <- system.file("exdata", "JSON_fiction.json", package = "RWebData")
+JSONtoDataFrame(JSON.ex, alignVariables=FALSE)
 }
 

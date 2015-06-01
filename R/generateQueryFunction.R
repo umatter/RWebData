@@ -62,7 +62,7 @@ generateQueryFunction <-
             e.reqfun <- parse(text=reqfun.string2)
             
             # b) rest of the request
-            e.get <- expression(data <- apiDatalight(apirequest))
+            e.get <- expression(data <- apiDatalight(apirequest, alignVariables=FALSE))
             e.df <- expression(if (length(data)==1 & is.data.frame(data[[1]])) {data <- data[[1]]})
             e.return <- expression(return(data))
             

@@ -1,14 +1,14 @@
-Package: RwebAPI
+Package: RWebData
 Type: Package
-Title: An R package that facilitates working with RESTful APIs
+Title: A High-Level Interface to the Programmable Web
 Depends: R (>= 3.0.2)
-Imports: igraph, RCurl, RJSONIO, jsonlite, rjson, XML, plyr, stringr,
-        XML2R, httr, mime, yaml
+Imports: igraph, RCurl, jsonlite, XML, plyr, stringr,
+        XML2R, httr, mime, yaml, RJSONIO, methods
 Version: 0.1
 Author: Ulrich Matter
-Maintainer: Ulrich Matter <ulrich.matter@unibas.ch>
-Description: RwebAPI provides various high- and low-level functions to write
-    open source interfaces to RESTful web APIs or interactively download data
-    from web APIs.
+Maintainer: Ulrich Matter <ulrich.matter@unibas.ch>, Ingmar Schlecht <ingmar.schlecht@unibas.ch>
+Description: RWebAPI provides various high- and low-level functions to write
+    open source interfaces to RESTful web APIs, interactively download data
+    from web APIs, and extract data from various web data formats as data frames.
 License: GPL-3
 Packaged: 2015-02-02 13:48:28 UTC; ueli
