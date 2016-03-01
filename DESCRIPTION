@@ -6,7 +6,7 @@ Imports: igraph, RCurl, jsonlite, XML, plyr, stringr,
         XML2R, httr, mime, yaml, RJSONIO, methods
 Version: 0.1
 Author: Ulrich Matter
-Maintainer: Ulrich Matter <ulrich.matter@unibas.ch>, Ingmar Schlecht <ingmar.schlecht@unibas.ch>
+Maintainer: Ulrich Matter <ulrich.matter@unibas.ch>
 Description: RWebAPI provides various high- and low-level functions to write
     open source interfaces to RESTful web APIs, interactively download data
     from web APIs, and extract data from various web data formats as data frames.
