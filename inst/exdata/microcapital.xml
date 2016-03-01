@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<firm>
+	<employees>
+		<employee>
+				<firstName>John</firstName>
+				<secondName>Smith</secondName>
+		</employee>
+		<employee>
+				<firstName>Peter</firstName>
+				<secondName>Pan</secondName>
+		</employee>
+	</employees>
+	<shareholders>
+		<shareholder>
+			<ID>S1</ID>
+			<Name>Karl Marx</Name>
+		</shareholder>
+		<shareholder>
+			<ID>S2</ID>
+			<Name>Bill Gates</Name>
+		</shareholder>
+	</shareholders>
+<firmName>MicroCapital Ltd</firmName>
+<firmID>123</firmID>
+</firm>

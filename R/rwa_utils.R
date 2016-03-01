@@ -2301,4 +2301,83 @@ plot.treedata <-
   }
 
 
+#----------------------------------------------------------------------------------
+# converts an HTML-encoded string to its character representation as an R string
+# usefull for urls and email addresses transmitted in html-encoded format
+# references: http://www.metaprog.com/samples/encoder.htm
+# details: the email address fred.flintstone@bedrock.com can be represented as html-encoded string: &#102;&#114;&#101;&#100;&#46;&#102;&#108;&#105;&#110;&#116;&#115;&#116;&#111;&#110;&#101;&#64;&#98;&#101;&#100;&#114;&#111;&#99;&#107;&#46;&#99;&#111;&#109;
+#  HTML Codes for accent marks: http://www.starr.net/is/type/htmlcodes.html
+#----------------------------------------------------------------------------------
+
+html_decode <- 
+	function(x) {
+		stopifnot(is.character(x))
+		
+		if (any(grepl(pattern = ";", x))){
+			xparsed <- gsub(pattern = "&#", replacement = "", x, fixed = TRUE)
+			xsep <- unlist(strsplit(xparsed, split = ";", fixed = TRUE))
+			xsep <- xsep[xsep!=""]
+			
+		} else {
+			xsep <- unlist(strsplit(x, split = "&#", fixed = TRUE))
+			xsep <- xsep[xsep!=""]
+		}
+		
+		xchar <- rawToChar(as.raw(xsep))
+		return(xchar)
+	}
+
+html_accent_decode <-
+	function(x) {
+		stopifnot(is.character(x))
+		
+		not_accent <- x %in% c("&amp;", "&quot;","&nbsp;")
+		if (!not_accent) { # only replace accents
+			xdec <- lapply(x, FUN=function(y) {
+				xmlValue(getNodeSet(htmlParse(y, asText = TRUE), "//p")[[1]]) 
+			})
+			xdec <- unlist(xdec)
+		} else {
+			xdec <- x
+		}
+		
+		return(xdec)
+	}
+
+html_decode_all <- 
+	function(x){
+		stopifnot(is.character(x))
+		
+		# decode and replace html-encoded strings (with ascii number)
+		allenc <- unlist(str_extract_all(x, "(&#[0-9]+)+;?"))
+		allenc <- unique(allenc[allenc!=""])
+		alldec <- unlist(lapply(allenc, html_decode))
+		not_empty <- which(alldec!="")
+		alldec <- alldec[not_empty]
+		allenc <- allenc[not_empty]
+		
+		nreplacements <- length(allenc)
+		for (i in 1:nreplacements){
+			enc.i <- allenc[i]
+			dec.i <- alldec[i]
+			x <- gsub(enc.i, dec.i, x, fixed=TRUE)
+		}
+		
+		# decode and replace html-encoded accents etc
+		allenc <- unlist(str_extract_all(x, "&[a-z]+;"))
+		allenc <- unique(allenc[allenc!=""])
+		alldec <- unlist(lapply(allenc, html_accent_decode))
+		not_empty <- which(alldec!="")
+		alldec <- alldec[not_empty]
+		allenc <- allenc[not_empty]
+		
+		nreplacements <- length(allenc)
+		for (i in 1:nreplacements){
+			enc.i <- allenc[i]
+			dec.i <- alldec[i]
+			x <- gsub(enc.i, dec.i, x, fixed=TRUE)
+		}
+		
+		return(x)
+	}
 
