@@ -96,9 +96,14 @@ content2list <-
                   }
             }
             
-            if (type.xml) {
-                  rx <- xml2list(body)  # xml2list instead of XML::xmlToList, depends on XML
-            }
+      	if (type.xml) {
+      		rx <- try(xml2list(body), silent=TRUE)  # xml2list instead of XML::xmlToList, depends on XML
+      		# xml parse failed? potential reason: html-encoded url strings (xmlParse cannot deal with e.g. "&#23")
+      		if (class(rx)=="try-error"){
+      			bodydecoded <- html_decode_all(body)
+      			rx <- xml2list(bodydecoded)
+      		}
+      	}
             
             if (type.yaml) {
                   rx <- yaml.load(body)
