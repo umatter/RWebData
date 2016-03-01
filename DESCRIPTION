@@ -10,5 +10,5 @@ Maintainer: Ulrich Matter <ulrich.matter@unibas.ch>, Ingmar Schlecht <ingmar.sch
 Description: RWebAPI provides various high- and low-level functions to write
     open source interfaces to RESTful web APIs, interactively download data
     from web APIs, and extract data from various web data formats as data frames.
-License: GPL-3
-Packaged: 2015-02-02 13:48:28 UTC; ueli
+License: GPL-2, GPL-3
+
