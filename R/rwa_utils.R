@@ -1108,6 +1108,8 @@ xml2list <- function(x) {
   x <- sub(pattern="^[^<]*<", replacement="<", x=x)
   x <- sub(pattern="^<xml", replacement="<?xml", x=x)
   
+  # decode HTML-special characters occuring in xml document
+  x <- html_decode_all(x)
   
   # partly taken from XML2R::urlsToDocs
   doc <- try_default(xmlParse(x, asText = TRUE), NULL, quiet = TRUE)
@@ -2355,13 +2357,16 @@ html_decode_all <-
 		not_empty <- which(alldec!="")
 		alldec <- alldec[not_empty]
 		allenc <- allenc[not_empty]
-		
+	
 		nreplacements <- length(allenc)
-		for (i in 1:nreplacements){
-			enc.i <- allenc[i]
-			dec.i <- alldec[i]
-			x <- gsub(enc.i, dec.i, x, fixed=TRUE)
+		if (nreplacements > 0) {
+		      for (i in 1:nreplacements){
+		            enc.i <- allenc[i]
+		            dec.i <- alldec[i]
+		            x <- gsub(enc.i, dec.i, x, fixed=TRUE)
+		      }
 		}
+
 		
 		# decode and replace html-encoded accents etc
 		allenc <- unlist(str_extract_all(x, "&[a-z]+;"))
@@ -2372,12 +2377,14 @@ html_decode_all <-
 		allenc <- allenc[not_empty]
 		
 		nreplacements <- length(allenc)
-		for (i in 1:nreplacements){
-			enc.i <- allenc[i]
-			dec.i <- alldec[i]
-			x <- gsub(enc.i, dec.i, x, fixed=TRUE)
+		if (nreplacements > 0) {
+		      for (i in 1:nreplacements){
+		            enc.i <- allenc[i]
+		            dec.i <- alldec[i]
+		            x <- gsub(enc.i, dec.i, x, fixed=TRUE)
+		      }
 		}
-		
+
 		return(x)
 	}
 
