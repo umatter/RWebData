@@ -44,7 +44,7 @@ content2list <-
                               type.yaml <- grepl(pattern="yaml", as.character(unlist(x@request.arguments)))  # temporary --> find better solution
                               
                               if (!(type.xml | type.json | type.yaml )) { #  type still not clear? guess based on string (so far only json)
-                                    type.json <- validate(body)
+                                    type.json <- jsonlite::validate(body)
                               }
                         }
                   }
