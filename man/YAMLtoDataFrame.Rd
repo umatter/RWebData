@@ -19,6 +19,6 @@ Given YAML document, this function maps the potentially nested YAML data to one 
 The data extraction algorithm applied in this function is based on the assumption that the YAML document describes either one or several entity types containing a set of observations described by different variables.
 }
 \examples{
-yaml.ex <- system.file("exdata", "microcapital.yml", package = "RWebData")
+yaml.ex <- system.file("exdata", "microcapital.yaml", package = "RWebData")
 YAMLtoDataFrame(yaml.ex, alignVariables=FALSE)
 }
