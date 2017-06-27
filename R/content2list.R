@@ -34,14 +34,14 @@ content2list <-
                   
                   if (!(type.xml | type.json | type.yaml )) { # type not found? guess type based on url
                         mime <- guess_type(as.character(unlist(x@request.arguments)))
-                        type.json <- grepl(pattern="json", mime)
-                        type.xml <- grepl(pattern="xml", mime)
-                        type.yaml <- grepl(pattern="yaml", mime)
+                        type.json <- any(grepl(pattern="json", mime))
+                        type.xml <- any(grepl(pattern="xml", mime))
+                        type.yaml <- any(grepl(pattern="yaml", mime))
                         
                         if (!(type.xml | type.json | type.yaml )) {  # type still not found? guess type based on request arguments
-                              type.json <- grepl(pattern="json", as.character(unlist(x@request.arguments)))  # temporary
-                              type.xml <- grepl(pattern="xml", as.character(unlist(x@request.arguments)))  # temporary --> find better solution
-                              type.yaml <- grepl(pattern="yaml", as.character(unlist(x@request.arguments)))  # temporary --> find better solution
+                              type.json <- any(grepl(pattern="json", as.character(unlist(x@request.arguments))))  # temporary
+                              type.xml <- any(grepl(pattern="xml", as.character(unlist(x@request.arguments))))  # temporary --> find better solution
+                              type.yaml <- any(grepl(pattern="yaml", as.character(unlist(x@request.arguments))))  # temporary --> find better solution
                               
                               if (!(type.xml | type.json | type.yaml )) { #  type still not clear? guess based on string (so far only json)
                                     type.json <- jsonlite::validate(body)
@@ -56,15 +56,15 @@ content2list <-
                         
                         if (!(type.xml | type.json | type.yaml )) { # type not found? guess type based on url
                               mime <- guess_type(as.character(unlist(x@request.arguments)))
-                              type.json <- grepl(pattern="json", mime)
-                              type.xml <- grepl(pattern="xml", mime)
-                              type.yaml <- grepl(pattern="yaml", mime)
+                              type.json <- any(grepl(pattern="json", mime))
+                              type.xml <- any(grepl(pattern="xml", mime))
+                              type.yaml <- any(grepl(pattern="yaml", mime))
                               
                               if (!(type.xml | type.json | type.yaml )) { # type still not found? guess type based on request arguments
-                                    type.json <- grepl(pattern="json", as.character(unlist(x@request.arguments)))  # temporary
-                                    type.xml <- grepl(pattern="xml", as.character(unlist(x@request.arguments)))  # temporary --> find better solution
-                                    type.yaml <- grepl(pattern="yaml", as.character(unlist(x@request.arguments)))  # temporary --> find better solution
-                                    
+                                   type.json <- any(grepl(pattern="json", as.character(unlist(x@request.arguments))))  # temporary
+                                   type.xml <- any(grepl(pattern="xml", as.character(unlist(x@request.arguments))))  # temporary --> find better solution
+                                   type.yaml <- any(grepl(pattern="yaml", as.character(unlist(x@request.arguments))))  # temporary --> find better solution
+                                   
                                     if (!(type.xml | type.json | type.yaml )) { #  type still not clear? guess based on string (so far only json)
                                           type.json <- validate(body)
                                     }
