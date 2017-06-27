@@ -24,4 +24,3 @@ The name of the environment the key is assigned to defaults to "apikeys".
 saveAPIkey(key.var="disq", key="1234" )
 get("disq", pos="apikeys")
 }
-

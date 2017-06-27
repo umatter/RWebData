@@ -19,4 +19,3 @@ Extracts the converted data from an apidata object.
 \dontrun{apidata <- apiData(x) # only works with a proper PVS API key}
 \dontrun{getdata(apidata)}
 }
-

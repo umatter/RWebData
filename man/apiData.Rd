@@ -25,4 +25,3 @@ A high-level function that automates the querying and extraction of data from a 
 \examples{
 \dontrun{apidata <- apiData(x) }
 }
-

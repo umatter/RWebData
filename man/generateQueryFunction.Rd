@@ -44,4 +44,3 @@ measureparameters <- data.frame(parameter="measureId", value=NA)
 \dontrun{getMeasure <- generateOSIFunction(x=measureparameters, base.url=pvsmeasure,
  key.param="key", key.object="pvs")}
 }
-

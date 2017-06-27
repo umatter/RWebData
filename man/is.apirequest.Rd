@@ -15,4 +15,3 @@ logical, TRUE if x is of class apirequest.
 \description{
 A function to check if an object is of class "apisreqest".
 }
-

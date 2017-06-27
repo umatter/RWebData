@@ -41,4 +41,3 @@ the requests are split up in batches and saved batchwise on disk during the down
 \examples{
 \dontrun{apidata <- apiDownload(x)}
 }
-

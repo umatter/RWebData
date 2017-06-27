@@ -26,4 +26,3 @@ A high-level function that directly queries and transforms data from any web API
 \examples{
 \dontrun{apidata <- getTabularData(x) }
 }
-

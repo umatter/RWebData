@@ -22,7 +22,6 @@ JSON document describes either one or several entity types containing a set of o
 described by different variables.
 }
 \examples{
-JSON.ex <- system.file("exdata", "JSON_fiction.json", package = "RWebData")
+JSON.ex <- system.file("exdata", "microcapital.json", package = "RWebData")
 JSONtoDataFrame(JSON.ex, alignVariables=FALSE)
 }
-

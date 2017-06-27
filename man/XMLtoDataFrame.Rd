@@ -24,7 +24,6 @@ The data extraction algorithm applied in this function partly relies on a nested
          Several attributes of the same tag will, however, be collected in the same data-frame column.
 }
 \examples{
-XML.ex <- system.file("exdata", "XML_fiction.xml", package = "RWebData")
+XML.ex <- system.file("exdata", "microcapital.xml", package = "RWebData")
 XMLtoDataFrame(XML.ex, alignVariables=FALSE)
 }
-
