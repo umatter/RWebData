@@ -1,0 +1,49 @@
+{
+    "John Doe's World": [
+        {
+            "title": "Places visited by John Doe"
+        },
+        {
+            "Places": {
+                "states": [
+                    {
+                        "name": "Massachussetts",
+                        "visited": true,
+                        "gradeState": 8
+                    },
+                    {
+                        "name": "New Jersey",
+                        "visited": false,
+                        "gradeState": null
+                    }
+                ],
+                "cities": [
+                    {
+                        "name": "New York",
+                        "visited": true,
+                        "gradeCity": 10
+                    },
+                    {
+                        "name": "Cambridge",
+                        "visited": true,
+                        "gradeCity": "Inf",
+                        "Notes": "Go in summer or autumn!"
+                    }
+                ]
+            },
+            "Personal": {
+                  "blondes": [],
+                "Traveler": [
+                    {
+                        "Name": {
+                            "firstName": "John",
+                            "lastName": "Doe"
+                        },
+                        "Age": "25"
+
+                    }
+                ]
+            }
+        }
+    ]
+}

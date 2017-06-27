@@ -11,7 +11,7 @@
 ##' @return one data frame or a list of several data frames
 ##' @export
 ##' @examples
-##' JSON.ex <- system.file("exdata", "JSON_fiction.json", package = "RWebData")
+##' JSON.ex <- system.file("exdata", "microcapital.json", package = "RWebData")
 ##' JSONtoDataFrame(JSON.ex, alignVariables=FALSE)
 
 

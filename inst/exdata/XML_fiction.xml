@@ -1,8 +1,6 @@
 <?xml version="1.1" encoding="UTF-8" ?>
 
-<loveBalance title = "John Doe's accounting framework of romantic relationships"
-             is.there.a.way.to.handle.this.information.as.a.comment.and.not.data = 
-             "yes, but instead we implemented it as attributes">
+<loveBalance title = "John Doe's accounting framework of romantic relationships">
 
 	<potentialWives>
 		<blondes>

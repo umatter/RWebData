@@ -8,14 +8,18 @@
 ##' @return one data frame or a list of several data frames
 ##' @export
 ##' @examples
-##' yaml.ex <- system.file("exdata", "YAML_fiction.yml", package = "RWebData")
+##' yaml.ex <- system.file("exdata", "microcapital.yml", package = "RWebData")
 ##' YAMLtoDataFrame(yaml.ex, alignVariables=FALSE)
 
 
 
 YAMLtoDataFrame <-
       function(x, alignVariables=FALSE) {
-            x.list <- yaml.load_file(x)
+            if (file.exists(x)){
+                  x.list <- yaml.load_file(x)
+            } else {
+                  x.list <- yaml.load(x)
+            }
             x.df <- listToDataFrame(x.list, alignVariables=FALSE)
             
             return(x.df)

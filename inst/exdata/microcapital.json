@@ -1,0 +1,1 @@
+{"firm": {"employees": {"employee": [{"firstName": "John", "secondName": "Smith"}, {"firstName": "Peter", "secondName": "Pan"}]}, "shareholders": {"shareholder": [{"ID": "S1", "Name": "Karl Marx"}, {"ID": "S2", "Name": "Bill Gates"}]}, "firmName": "MicroCapital Ltd", "firmID": "123"}}

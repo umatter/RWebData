@@ -11,7 +11,7 @@
 ##'          Several attributes of the same tag will, however, be collected in the same data-frame column.
 ##' @export
 ##' @examples
-##' XML.ex <- system.file("exdata", "XML_fiction.xml", package = "RWebData")
+##' XML.ex <- system.file("exdata", "microcapital.xml", package = "RWebData")
 ##' XMLtoDataFrame(XML.ex, alignVariables=FALSE)
 
 
