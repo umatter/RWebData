@@ -8,7 +8,7 @@
 ##' @return one data frame or a list of several data frames
 ##' @export
 ##' @examples
-##' yaml.ex <- system.file("exdata", "microcapital.yml", package = "RWebData")
+##' yaml.ex <- system.file("exdata", "microcapital.yaml", package = "RWebData")
 ##' YAMLtoDataFrame(yaml.ex, alignVariables=FALSE)
 
 
