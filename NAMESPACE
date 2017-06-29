@@ -28,5 +28,5 @@ importFrom(jsonlite,validate)
 importFrom(stringr, str_wrap)
 importFrom(stringr, str_count)
 importFrom(stringr, str_sub)
-importFrom(stringr, str_exctract_all)
+importFrom(stringr, str_extract_all)
 
