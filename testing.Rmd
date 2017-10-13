@@ -1,0 +1,102 @@
+---
+title: "Testing RWebData"
+author: "Ulrich Matter"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+Install and load latest version of the package
+========================================================
+
+```{r eval=FALSE}
+library(devtools)
+install_github("umatter/rwebdata")
+```
+```{r}
+library(RWebData)
+```
+
+
+
+
+
+Unit tests in package examples
+========================================================
+
+```{r}
+example(XMLtoDataFrame)
+example(YAMLtoDataFrame)
+example(JSONtoDataFrame)
+example(RSStoDataFrame)
+```
+
+
+Test basic functionality with openly accessible APIs
+========================================================
+```{r}
+
+# Example API calls
+example_urls <- 
+      c("https://projects.propublica.org/nonprofits/api/v1/organizations/142007220.json"
+      ,"https://projects.propublica.org/free-the-files/stations/WEWS-TV.json"
+      ,"http://projects.propublica.org/forensics/systems.json"
+      ,"https://data.police.uk/api/crimes-street/all-crime?lat=52.629729&lng=-1.131592&date=2017-01"
+      ,"https://health.data.ny.gov/resource/cnih-y5dw.json?date=2015-02-11T00%3A00%3A00"
+      ,"https://data.consumerfinance.gov/resource/jhzv-w97w.json"
+      ,"http://stats.oecd.org/restsdmx/sdmx.ashx/GetData/UN_DEN/AUS+CAN+FRA+DEU+NZL+GBR+USA+OECD/OECD?startTime=1960&endTime=2012"
+      ,"http://ergast.com/api/f1/2013/1/results.json"
+      ,"http://search.worldbank.org/api/v2/projects?format=json&qterm=Water&source=IBRD&srt=score&order=desc&kw=N"
+      ,"http://api.worldbank.org/countries"
+      ,"http://api.worldbank.org/countries?incomeLevel=LMC&format=xml"
+      ,"http://api.worldbank.org/countries?incomeLevel=LMC&format=json"
+      ,"https://api.github.com/users/hadley/orgs"
+      ,"https://api.github.com/users/hadley/repos"
+      ,"https://api.github.com/repos/hadley/ggplot2/commits"
+      ,"http://citibikenyc.com/stations/json"
+      ,'http://ergast.com/api/f1/2012/1/results.json'
+      ,"http://www.bistip.com/api/v1/trips.json?from=jakarta&to=singapore "
+      , "https://zlzlap7j50.execute-api.us-east-1.amazonaws.com/prod")
+
+
+# test core functionality
+for (i in example_urls) {
+      
+      print(i)
+      attempt <- try(getTabularData(i))
+      if (class(attempt)=="try-error") {
+            cat(paste0("Error in call", i, "\n"))
+      } else {
+            print(summary(attempt))
+      }
+}
+```
+
+
+
+
+APIs needing registration
+========================================================
+In addition to the examples listed above, RWebData has been tested with various APIs that need user registration. Examples of API-calls that work with the current version (replace `<YOUR-API-KEY>` with your personal key after registering with the respective API in order to run the example code):
+
+
+`"http://openstates.org/api/v1/legislators/DCL000003/?apikey=<YOUR-API-KEY>"`
+`"http://openstates.org/api/v1/legislators/?state=dc&apikey=<YOUR-API-KEY>"`
+`"http://politicalpartytime.org/api/v1/event/?apikey=<YOUR-API-KEY>&limit=50&offset=50&format=json"`
+`"http://politicalpartytime.org/api/v1/host/?apikey=<YOUR-API-KEY>&limit=50&offset=50&format=json"`
+`"http://openstates.org/api/v1/bills/?state=dc&q=taxi&apikey=<YOUR-API-KEY>"`
+`"http://api.legiscan.com/?key=<YOUR-API-KEY>&op=getMasterList&state=CA"`
+`"https://api.foursquare.com/v2/venues/search?client_id=<YOUR-CLIENT-ID>&client_secret=<YOUR-CLIENT-SECRET>&v=20130815&ll=40.7-74&query=sushi"`
+`"http://api.votesmart.org/Measure.getMeasure?key=<YOUR-API-KEY>&measureId=1632"`
+`"http://api.votesmart.org/CandidateBio.getBio?key=<YOUR-API-KEY>&candidateId=9490"`
+`"https://maps.googleapis.com/maps/api/place/radarsearch/json?location=47.6823988.822546&radius=50000&sensor=false&keyword=&name=&types=restaurant&key=<YOUR-API-KEY>"`
+`"https://disqus.com/api/3.0/threads/set.json?&thread=ident:1.18176733&thread=ident:1.18176650&thread=ident:1.18176644&thread=ident:1.18176619&thread=ident:1.18175246&forum=nzz&api_key=<YOUR-API-KEY>"`
+
+
+NOTE
+=====
+It might happen that some of the listed web APIs are either temporarily not reacheable or were put out of business. This list will be updated periodically to keep track of such changes and add additional examples. In any case, it can happen that this list is not a 100% up to date at some point in time and it thus cannot be guaranteed that all of the shown examples work perfectly if changes are made on the server side. 
+

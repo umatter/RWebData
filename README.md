@@ -11,7 +11,7 @@ The rise of the programmable web offers new opportunities for the empirically dr
 
 ### How to get started? ###
 
-* Install via the devtools package: install_github("umatter/rwebdata")
+* Install via the devtools package: devtools::install_github("umatter/rwebdata")
 * Dependencies: see DESCRIPTION-File in Source-directory
 
 ### Contribution guidelines ###
