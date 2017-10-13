@@ -16,7 +16,7 @@ Imports:
     yaml,
     RJSONIO,
     methods
-Version: 0.1
+Version: 0.2
 Author: Ulrich Matter
 Maintainer: Ulrich Matter <ulrich.matter@unibas.ch>
 Description: RWebAPI provides various high- and low-level functions to write
