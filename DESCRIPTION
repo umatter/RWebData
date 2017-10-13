@@ -2,7 +2,7 @@ Package: RWebData
 Type: Package
 Title: A High-Level Interface to the Programmable Web
 Depends:
-    R (>= 3.3.2)
+    R (>= 3.2.3)
 Imports:
     igraph,
     RCurl,
