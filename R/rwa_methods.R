@@ -239,7 +239,7 @@ setMethod(f = "show",
 plot.apiresponse <-
       function(x, type="normal", char.lim=8, all=FALSE, leveldist=0.15, vertex.size=16,
            vertex.shape="none", vertex.label.cex=0.7, ...) {
-            stopifnot((type=="normal" | type=="jitter" | type=="manualscale"))
+            stopifnot((type=="normal" | type=="jitter" | type=="manualscale" | type=="vertical"))
             
             x <- content2list(x)    
             
@@ -271,6 +271,16 @@ plot.apiresponse <-
                                             vertex.label.cex=vertex.label.cex,
                                             ...)
             }
+            
+            if (type=="vertical") {
+                 visualize.treedata.vertical(x=x,
+                                    all=all,
+                                    vertex.size=vertex.size,
+                                    vertex.shape=vertex.shape,
+                                    vertex.label.cex=vertex.label.cex, 
+                                    ...)
+            }
+            
       }
 
 # set plot method
@@ -475,4 +485,5 @@ setMethod(f = "plot",
           signature = "apidata",
           definition = plot.apidata
           )
+            
 

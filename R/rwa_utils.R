@@ -2185,7 +2185,7 @@ visualize.treedata.jitter <-
 
 
 #---------------------
-# visualize.treedata.equal(x, charlim, ...)
+# visualize.treedata.manual(x, charlim, ...)
 # plot function for treedata objects based on manual scaling (optimized for treas with many branches/leafs, in order to make the node labels readable in the plot)
 # x a nested list representing tree structured data (XML/JSON)
 # all logical, indicating whether the edge-matrix should be generated for all elements (i.e. also duplicated parent-child combinations)
@@ -2281,6 +2281,42 @@ visualize.treedata <-
     )
     
   }
+
+
+#---------------------
+# visualize.treedata.vertical(x, all, vertex.size, vertex.shape, vertex.label.cex)
+# plot function for treedata objects based on manual scaling (optimized for trees with many branches/leafs, in order to make the node labels readable in the plot)
+# x a nested list representing tree structured data (XML/JSON)
+# all logical, indicating whether the edge-matrix should be generated for all elements (i.e. also duplicated parent-child combinations)
+#     defaults to FALSE (passed on to edgeMatrix())
+# further parameters --> igraph.plot parameters 
+#Details: the core of this function is a wrapper around the layout.reingold.tilford() function from the igraph package.
+#---------------------
+
+visualize.treedata.vertical <-
+     function(x, all=FALSE, check.nodenames=TRUE, vertex.size=15, vertex.shape="none", vertex.label.cex=0.7, vertex.label.family="sans", vertex.label.color="steelblue", ...) {
+          stopifnot((is.list(x) | is.character(x)), is.logical(all), is.numeric(vertex.size), is.character(vertex.shape), is.numeric(vertex.label.cex))
+          #require(igraph)
+          
+          # generate tree graph and get basic tree layout
+          edge.matrix <- edgeMatrix(x,all=all, check.nodenames=check.nodenames)
+          gtree <- graph.edgelist(el=edge.matrix, directed=FALSE)
+          l <- layout.reingold.tilford(gtree, root=1)
+          
+          # actual plotting
+          plot.igraph2(gtree,
+               vertex.size=vertex.size,
+               vertex.shape=vertex.shape,
+               vertex.label.cex=vertex.label.cex,
+               vertex.label.family=vertex.label.family,
+               vertex.label.color=vertex.label.color,
+               rescale=TRUE,
+               layout=l,
+               ...
+          )
+          
+     }
+
 
 
 ############################
@@ -2387,4 +2423,2868 @@ html_decode_all <-
 
 		return(x)
 	}
+
+
+
+
+
+
+
+
+######## THE FOLLOWING CODE IS TAKEN FROM THE igraph PACKAGE ########
+# minor changes by UM, in order to plot vertex labels vertically, following
+# the suggestion in https://github.com/igraph/rigraph/issues/106
+# if the issue is resolved at some time by incorporating this feature in the igraph package,
+# the following code can be removed and the visualize.treedata-functions can be updated accordingly in order
+# to incorporate the option of vertical labels.
+# The current implementation relies on loading the slighly modified code below (the plot.igraph2 -function and its dependencies)
+
+
+#   IGraph R package
+#   Copyright (C) 2003-2012  Gabor Csardi <csardi.gabor@gmail.com>
+#   334 Harvard street, Cambridge, MA 02139 USA
+
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#   
+#   You should have received a copy of the GNU General Public License
+#   along with this program; if not, write to the Free Software
+#   Foundation, Inc.,  51 Franklin Street, Fifth Floor, Boston, MA
+#   02110-1301 USA
+#
+###################################################################
+
+
+
+#' Plotting of graphs
+#' 
+#' \code{plot.igraph} is able to plot graphs to any R device. It is the
+#' non-interactive companion of the \code{tkplot} function.
+#' 
+#' One convenient way to plot graphs is to plot with \code{\link{tkplot}}
+#' first, handtune the placement of the vertices, query the coordinates by the
+#' \code{\link{tk_coords}} function and use them with \code{plot} to
+#' plot the graph to any R device.
+#'
+#' @aliases plot.graph
+#' @param x The graph to plot.
+#' @param axes Logical, whether to plot axes, defaults to FALSE.
+#' @param add Logical scalar, whether to add the plot to the current device, or
+#' delete the device's current contents first.
+#' @param xlim The limits for the horizontal axis, it is unlikely that you want
+#' to modify this.
+#' @param ylim The limits for the vertical axis, it is unlikely that you want
+#' to modify this.
+#' @param mark.groups A list of vertex id vectors. It is interpreted as a set
+#' of vertex groups. Each vertex group is highlighted, by plotting a colored
+#' smoothed polygon around and \dQuote{under} it. See the arguments below to
+#' control the look of the polygons.
+#' @param mark.shape A numeric scalar or vector. Controls the smoothness of the
+#' vertex group marking polygons. This is basically the \sQuote{shape}
+#' parameter of the \code{\link[graphics]{xspline}} function, its possible
+#' values are between -1 and 1. If it is a vector, then a different value is
+#' used for the different vertex groups.
+#' @param mark.col A scalar or vector giving the colors of marking the
+#' polygons, in any format accepted by \code{\link[graphics]{xspline}}; e.g.
+#' numeric color ids, symbolic color names, or colors in RGB.
+#' @param mark.border A scalar or vector giving the colors of the borders of
+#' the vertex group marking polygons. If it is \code{NA}, then no border is
+#' drawn.
+#' @param mark.expand A numeric scalar or vector, the size of the border around
+#' the marked vertex groups. It is in the same units as the vertex sizes. If a
+#' vector is given, then different values are used for the different vertex
+#' groups.
+#' @param \dots Additional plotting parameters. See \link{igraph.plotting} for
+#' the complete list.
+#' @return Returns \code{NULL}, invisibly.
+#' @author Gabor Csardi \email{csardi.gabor@@gmail.com}
+#' @seealso \code{\link{layout}} for different layouts,
+#' \code{\link{igraph.plotting}} for the detailed description of the plotting
+#' parameters and \code{\link{tkplot}} and \code{\link{rglplot}} for other
+#' graph plotting functions.
+#' @method plot igraph
+#' @export
+#' @export plot.igraph
+#' @importFrom grDevices rainbow
+#' @importFrom graphics plot polygon text par
+#' @keywords graphs
+#' @examples
+#' 
+#' g <- ring(10)
+#' \dontrun{plot(g, layout=layout_with_kk, vertex.color="green")}
+#' 
+plot.igraph2 <- function(x, 
+                        # SPECIFIC: #####################################
+                        axes=FALSE, add=FALSE,
+                        xlim=c(-1,1), ylim=c(-1,1),
+                        mark.groups=list(), mark.shape=1/2,
+                        mark.col=rainbow(length(mark.groups), alpha=0.3),
+                        mark.border=rainbow(length(mark.groups), alpha=1),
+                        mark.expand=15,
+                        ...) {
+     
+     graph <- x
+     if (!is_igraph(graph)) {
+          stop("Not a graph object")
+     }
+     
+     ################################################################
+     ## Visual parameters
+     params <- i.parse.plot.params(graph, list(...))
+     vertex.size        <- 1/200 * params("vertex", "size")
+     label.family       <- params("vertex", "label.family")
+     label.font         <- params("vertex", "label.font")
+     label.cex          <- params("vertex", "label.cex")
+     label.degree       <- params("vertex", "label.degree")
+     label.color        <- params("vertex", "label.color")
+     label.dist         <- params("vertex", "label.dist")
+     labels             <- params("vertex", "label")
+     shape              <- igraph.check.shapes(params("vertex", "shape"))
+     
+     edge.color         <- params("edge", "color")
+     edge.width         <- params("edge", "width")
+     edge.lty           <- params("edge", "lty")
+     arrow.mode         <- params("edge", "arrow.mode")
+     edge.labels        <- params("edge", "label")
+     loop.angle         <- params("edge", "loop.angle")
+     edge.label.font    <- params("edge", "label.font")
+     edge.label.family  <- params("edge", "label.family")
+     edge.label.cex     <- params("edge", "label.cex")
+     edge.label.color   <- params("edge", "label.color")
+     elab.x             <- params("edge", "label.x")
+     elab.y             <- params("edge", "label.y")
+     arrow.size         <- params("edge", "arrow.size")[1]
+     arrow.width        <- params("edge", "arrow.width")[1]
+     curved             <- params("edge", "curved")
+     if (is.function(curved)) { curved <- curved(graph) }
+     
+     layout             <- params("plot", "layout")
+     margin             <- params("plot", "margin")
+     margin <- rep(margin, length=4)
+     rescale            <- params("plot", "rescale")
+     asp                <- params("plot", "asp")
+     frame              <- params("plot", "frame")
+     main               <- params("plot", "main")
+     sub                <- params("plot", "sub")
+     xlab               <- params("plot", "xlab")
+     ylab               <- params("plot", "ylab")
+     
+     palette            <- params("plot", "palette")
+     if (!is.null(palette)) {
+          old_palette <- palette(palette)
+          on.exit(palette(old_palette), add = TRUE)
+     }
+     
+     # the new style parameters can't do this yet
+     arrow.mode         <- i.get.arrow.mode(graph, arrow.mode)
+     
+     ################################################################
+     ## create the plot
+     maxv <- max(vertex.size)
+     if (rescale) {
+          # norm layout to (-1, 1)
+          layout <- norm_coords(layout, -1, 1, -1, 1)
+          xlim <- c(xlim[1]-margin[2]-maxv, xlim[2]+margin[4]+maxv)
+          ylim <- c(ylim[1]-margin[1]-maxv, ylim[2]+margin[3]+maxv)
+     }
+     if (!add) {
+          plot(0, 0, type="n", xlab=xlab, ylab=ylab, xlim=xlim, ylim=ylim,
+               axes=axes, frame=frame, asp=asp, main=main, sub=sub)
+     }
+     
+     ################################################################
+     ## Mark vertex groups
+     if (!is.list(mark.groups) && is.numeric(mark.groups)) {
+          mark.groups <- list(mark.groups)
+     }
+     
+     mark.shape  <- rep(mark.shape,  length=length(mark.groups))
+     mark.border <- rep(mark.border, length=length(mark.groups))
+     mark.col    <- rep(mark.col,    length=length(mark.groups))
+     mark.expand <- rep(mark.expand, length=length(mark.groups))
+     
+     for (g in seq_along(mark.groups)) {
+          v <- V(graph)[mark.groups[[g]]]
+          if (length(vertex.size)==1) {
+               vs <- vertex.size
+          } else {
+               vs <- rep(vertex.size, length=vcount(graph))[v]
+          }
+          igraph.polygon(layout[v,,drop=FALSE],
+                         vertex.size=vs,
+                         expand.by=mark.expand[g]/200,
+                         shape=mark.shape[g],
+                         col=mark.col[g],
+                         border=mark.border[g])
+     }
+     
+     ################################################################
+     ## calculate position of arrow-heads
+     el <- as_edgelist(graph, names=FALSE)
+     loops.e <- which(el[,1] == el[,2])
+     nonloops.e <- which(el[,1] != el[,2])
+     loops.v <- el[,1] [loops.e]
+     loop.labels <- edge.labels[loops.e]
+     loop.labx <- if (is.null(elab.x)) {
+          rep(NA, length(loops.e))
+     } else {
+          elab.x[loops.e]
+     }
+     loop.laby <- if (is.null(elab.y)) {
+          rep(NA, length(loops.e))
+     } else {
+          elab.y[loops.e]
+     }
+     edge.labels <- edge.labels[nonloops.e]
+     elab.x <- if (is.null(elab.x)) NULL else elab.x[nonloops.e]
+     elab.y <- if (is.null(elab.y)) NULL else elab.y[nonloops.e]
+     el <- el[nonloops.e,,drop=FALSE]
+     
+     edge.coords <- matrix(0, nrow=nrow(el), ncol=4)
+     edge.coords[,1] <- layout[,1][ el[,1] ]
+     edge.coords[,2] <- layout[,2][ el[,1] ]
+     edge.coords[,3] <- layout[,1][ el[,2] ]
+     edge.coords[,4] <- layout[,2][ el[,2] ]
+     if ( length(unique(shape)) == 1) {
+          ## same vertex shape for all vertices
+          ec <- .igraph.shapes[[ shape[1] ]]$clip(edge.coords, el,
+                                                  params=params, end="both")
+     } else {
+          ## different vertex shapes, do it by "endpoint"
+          shape <- rep(shape, length=vcount(graph))
+          ec <- edge.coords
+          ec[,1:2] <- t(sapply(seq(length=nrow(el)), function(x) {
+               .igraph.shapes[[ shape[el[x,1]] ]]$clip(edge.coords[x,,drop=FALSE],
+                                                       el[x,,drop=FALSE],
+                                                       params=params, end="from")
+          }))
+          ec[,3:4] <- t(sapply(seq(length=nrow(el)), function(x) {
+               .igraph.shapes[[ shape[el[x,2]] ]]$clip(edge.coords[x,,drop=FALSE],
+                                                       el[x,,drop=FALSE],
+                                                       params=params, end="to")
+          }))
+     }
+     
+     x0 <- ec[,1] ; y0 <- ec[,2] ; x1 <- ec[,3] ; y1 <- ec[,4]
+     
+     ################################################################
+     ## add the loop edges
+     if (length(loops.e) > 0) {
+          ec <- edge.color
+          if (length(ec)>1) { ec <- ec[loops.e] }
+          
+          point.on.cubic.bezier <- function(cp, t) {
+               
+               c <- 3 * (cp[2,] - cp[1,])
+               b <- 3 * (cp[3,] - cp[2,]) - c
+               a <- cp[4,] - cp[1,] - c - b
+               
+               t2 <- t*t;
+               t3 <- t*t*t
+               
+               a*t3 + b*t2 + c*t + cp[1,]
+          }
+          
+          compute.bezier <- function(cp, points) {
+               dt <- seq(0, 1, by=1/(points-1))
+               sapply(dt, function(t) point.on.cubic.bezier(cp, t))
+          }
+          
+          plot.bezier <- function(cp, points, color, width, arr, lty, arrow.size, arr.w) {
+               p <- compute.bezier( cp, points )
+               polygon(p[1,], p[2,], border=color, lwd=width, lty=lty)
+               if (arr==1 || arr==3) {
+                    igraph.Arrows(p[1,ncol(p)-1], p[2,ncol(p)-1], p[1,ncol(p)], p[2,ncol(p)],
+                                  sh.col=color, h.col=color, size=arrow.size,
+                                  sh.lwd=width, h.lwd=width, open=FALSE, code=2, width=arr.w)
+               }
+               if (arr==2 || arr==3) {
+                    igraph.Arrows(p[1,2], p[2,2], p[1,1], p[2,1],
+                                  sh.col=color, h.col=color, size=arrow.size,
+                                  sh.lwd=width, h.lwd=width, open=FALSE, code=2, width=arr.w)
+               }
+          }
+          
+          loop <- function(x0, y0, cx=x0, cy=y0, color, angle=0, label=NA,
+                           width=1, arr=2, lty=1, arrow.size=arrow.size,
+                           arr.w=arr.w, lab.x, lab.y) {
+               
+               rad <- angle
+               center <- c(cx,cy)
+               cp <- matrix( c(x0,y0, x0+.4,y0+.2, x0+.4,y0-.2, x0,y0),
+                             ncol=2, byrow=TRUE)
+               phi <- atan2(cp[,2]-center[2], cp[,1]-center[1])
+               r <- sqrt((cp[,1]-center[1])**2 + (cp[,2]-center[2])**2)
+               
+               phi <- phi + rad
+               
+               cp[,1] <- cx+r*cos(phi)
+               cp[,2] <- cy+r*sin(phi)
+               
+               plot.bezier(cp, 50, color, width, arr=arr, lty=lty, arrow.size=arrow.size, arr.w=arr.w)
+               
+               if (is.language(label) || !is.na(label)) {
+                    lx <- x0+.3
+                    ly <- y0
+                    phi <- atan2(ly-center[2], lx-center[1])
+                    r <- sqrt((lx-center[1])**2 + (ly-center[2])**2)
+                    
+                    phi <- phi + rad
+                    
+                    lx <- cx+r*cos(phi)
+                    ly <- cy+r*sin(phi)
+                    
+                    if (!is.na(lab.x)) { lx <- lab.x }
+                    if (!is.na(lab.y)) { ly <- lab.y }
+                    
+                    text(lx, ly, label, col=edge.label.color, font=edge.label.font,
+                         family=edge.label.family, cex=edge.label.cex)
+               }
+          }
+          
+          ec <- edge.color
+          if (length(ec)>1) { ec <- ec[loops.e] }
+          vs <- vertex.size
+          if (length(vertex.size)>1) { vs <- vs[loops.v] }
+          ew <- edge.width
+          if (length(edge.width)>1) { ew <- ew[loops.e] }
+          la <- loop.angle
+          if (length(loop.angle)>1) { la <- la[loops.e] }
+          lty <- edge.lty
+          if (length(edge.lty)>1) { lty <- lty[loops.e] }
+          arr <- arrow.mode
+          if (length(arrow.mode)>1) { arr <- arrow.mode[loops.e] }
+          asize <- arrow.size
+          if (length(arrow.size)>1) { asize <- arrow.size[loops.e] }
+          xx0 <- layout[loops.v,1] + cos(la) * vs
+          yy0 <- layout[loops.v,2] - sin(la) * vs
+          mapply(loop, xx0, yy0,
+                 color=ec, angle=-la, label=loop.labels, lty=lty,
+                 width=ew, arr=arr, arrow.size=asize, arr.w=arrow.width,
+                 lab.x=loop.labx, lab.y=loop.laby)
+     }
+     
+     ################################################################
+     ## non-loop edges
+     if (length(x0) != 0) {
+          if (length(edge.color)>1) { edge.color <- edge.color[nonloops.e] }
+          if (length(edge.width)>1) { edge.width <- edge.width[nonloops.e] }
+          if (length(edge.lty)>1) { edge.lty <- edge.lty[nonloops.e] }
+          if (length(arrow.mode)>1) { arrow.mode <- arrow.mode[nonloops.e] }
+          if (length(arrow.size)>1) { arrow.size <- arrow.size[nonloops.e] }
+          if (length(curved)>1) { curved <- curved[nonloops.e] }
+          if (length(unique(arrow.mode))==1) {
+               lc <-igraph.Arrows(x0, y0, x1, y1, h.col=edge.color, sh.col=edge.color,
+                                  sh.lwd=edge.width, h.lwd=1, open=FALSE, code=arrow.mode[1],
+                                  sh.lty=edge.lty, h.lty=1, size=arrow.size,
+                                  width=arrow.width, curved=curved)
+               lc.x <- lc$lab.x
+               lc.y <- lc$lab.y
+          } else {
+               ## different kinds of arrows drawn separately as 'arrows' cannot
+               ## handle a vector as the 'code' argument
+               curved <- rep(curved, length=ecount(graph))[nonloops.e]
+               lc.x <- lc.y <- numeric(length(curved))
+               for (code in 0:3) {
+                    valid <- arrow.mode==code
+                    if (!any(valid)) { next }
+                    ec <- edge.color ; if (length(ec)>1) { ec <- ec[valid] }
+                    ew <- edge.width ; if (length(ew)>1) { ew <- ew[valid] }
+                    el <- edge.lty   ; if (length(el)>1) { el <- el[valid] }
+                    lc <- igraph.Arrows(x0[valid], y0[valid], x1[valid], y1[valid],
+                                        code=code, sh.col=ec, h.col=ec, sh.lwd=ew, h.lwd=1,
+                                        h.lty=1, sh.lty=el, open=FALSE, size=arrow.size,
+                                        width=arrow.width, curved=curved[valid])
+                    lc.x[valid] <- lc$lab.x
+                    lc.y[valid] <- lc$lab.y
+               }
+          }
+          if (!is.null(elab.x)) { lc.x <- ifelse(is.na(elab.x), lc.x, elab.x) }
+          if (!is.null(elab.y)) { lc.y <- ifelse(is.na(elab.y), lc.y, elab.y) }
+          text(lc.x, lc.y, labels=edge.labels, col=edge.label.color,
+               family=edge.label.family, font=edge.label.font, cex=edge.label.cex)
+     }
+     
+     rm(x0, y0, x1, y1)
+     
+     ################################################################
+     # add the vertices
+     if (length(unique(shape)) == 1) {
+          .igraph.shapes[[ shape[1] ]]$plot(layout, params=params)
+     } else {
+          sapply(seq(length=vcount(graph)), function(x) {
+               .igraph.shapes[[ shape[x] ]]$plot(layout[x,,drop=FALSE], v=x,
+                                                 params=params)
+          })
+     }
+     
+     ################################################################
+     # add the labels
+     par(xpd=TRUE)
+     x <- layout[,1]+label.dist*cos(-label.degree)* 
+          (vertex.size+6*8*log10(2))/200
+     y <- layout[,2]+label.dist*sin(-label.degree)*
+          (vertex.size+6*8*log10(2))/200
+     if (length(label.family)==1) {
+          text(x, y, labels=labels, col=label.color, family=label.family,
+               font=label.font, cex=label.cex, srt=90) # UM: added srt=90, following the suggestion in https://github.com/igraph/rigraph/issues/106
+          # NOTE: if the suggested feature is added to the igraph package at some point, this code should be simplified: igraph-internal code wil become obsolete, but simply adjust the visualize.treedata.vertical function
+          
+     } else {
+          if1 <- function(vect, idx) if (length(vect)==1) vect else vect[idx]
+          sapply(seq_len(vcount(graph)), function(v) {
+               text(x[v], y[v], labels=if1(labels, v), col=if1(label.color, v),
+                    family=if1(label.family, v), font=if1(label.font, v),
+                    cex=if1(label.cex, v), srt=90) # UM: added srt=90, following the suggestion in https://github.com/igraph/rigraph/issues/106
+               # NOTE: if the suggested feature is added to the igraph package at some point, this code should be simplified: igraph-internal code wil become obsolete, but simply adjust the visualize.treedata.vertical function
+               
+          })
+     }
+     rm(x, y)
+     invisible(NULL)
+}
+
+
+
+#' 3D plotting of graphs with OpenGL
+#' 
+#' Using the \code{rgl} package, \code{rglplot} plots a graph in 3D. The plot
+#' can be zoomed, rotated, shifted, etc. but the coordinates of the vertices is
+#' fixed.
+#' 
+#' Note that \code{rglplot} is considered to be highly experimental. It is not
+#' very useful either. See \code{\link{igraph.plotting}} for the possible
+#' arguments.
+#' 
+#' @aliases rglplot rglplot.igraph
+#' @param x The graph to plot.
+#' @param \dots Additional arguments, see \code{\link{igraph.plotting}} for the
+#' details
+#' @return \code{NULL}, invisibly.
+#' @author Gabor Csardi \email{csardi.gabor@@gmail.com}
+#' @seealso \code{\link{igraph.plotting}}, \code{\link{plot.igraph}} for the 2D
+#' version, \code{\link{tkplot}} for interactive graph drawing in 2D.
+#' @export
+#' @keywords graphs
+#' @export
+#' @examples
+#' 
+#' \dontrun{
+#' g <- make_lattice( c(5,5,5) )
+#' coords <- layout_with_fr(g, dim=3)
+#' rglplot(g, layout=coords)
+#' }
+#' 
+rglplot        <- function(x, ...)
+     UseMethod("rglplot", x)
+
+#' @method rglplot igraph
+#' @export
+
+rglplot.igraph <- function(x, ...) {
+     
+     graph <- x
+     if (!is_igraph(graph)) {
+          stop("Not a graph object")
+     }
+     
+     create.edge <- function(v1, v2, r1, r2, ec, ew, am, as) {
+          ## these could also be parameters:
+          aw <- 0.005*3*as                      # arrow width
+          al <- 0.005*4*as                      # arrow length    
+          
+          dist <- sqrt(sum((v2-v1)^2))   # distance of the centers
+          
+          if (am==0) {
+               edge <- rgl::qmesh3d(c(-ew/2,-ew/2,dist,1, ew/2,-ew/2,dist,1, ew/2,ew/2,dist,1,
+                                      -ew/2,ew/2,dist,1,  -ew/2,-ew/2,0,1, ew/2,-ew/2,0,1,
+                                      ew/2,ew/2,0,1, -ew/2,ew/2,0,1),
+                                    c(1,2,3,4, 5,6,7,8, 1,2,6,5, 2,3,7,6, 3,4,8,7, 4,1,5,8))
+          } else if (am==1) {
+               edge <- rgl::qmesh3d(c(-ew/2,-ew/2,dist,1, ew/2,-ew/2,dist,1,
+                                      ew/2,ew/2,dist,1, -ew/2,ew/2,dist,1,
+                                      -ew/2,-ew/2,al+r1,1, ew/2,-ew/2,al+r1,1,
+                                      ew/2,ew/2,al+r1,1, -ew/2,ew/2,al+r1,1,
+                                      -aw/2,-aw/2,al+r1,1, aw/2,-aw/2,al+r1,1,
+                                      aw/2,aw/2,al+r1,1, -aw/2,aw/2,al+r1,1, 0,0,r1,1),
+                                    c(1,2,3,4, 5,6,7,8, 1,2,6,5, 2,3,7,6, 3,4,8,7, 4,1,5,8,
+                                      9,10,11,12, 9,12,13,13, 9,10,13,13, 10,11,13,13,
+                                      11,12,13,13))
+          } else if (am==2) {
+               box <- dist-r2-al
+               edge <- rgl::qmesh3d(c(-ew/2,-ew/2,box,1, ew/2,-ew/2,box,1, ew/2,ew/2,box,1,
+                                      -ew/2,ew/2,box,1,  -ew/2,-ew/2,0,1, ew/2,-ew/2,0,1,
+                                      ew/2,ew/2,0,1, -ew/2,ew/2,0,1,
+                                      -aw/2,-aw/2,box,1, aw/2,-aw/2,box,1, aw/2,aw/2,box,1,
+                                      -aw/2,aw/2,box,1, 0,0,box+al,1),
+                                    c(1,2,3,4, 5,6,7,8, 1,2,6,5, 2,3,7,6, 3,4,8,7, 4,1,5,8,
+                                      9,10,11,12, 9,12,13,13, 9,10,13,13, 10,11,13,13,
+                                      11,12,13,13))
+          } else {
+               edge <- rgl::qmesh3d(c(-ew/2,-ew/2,dist-al-r2,1, ew/2,-ew/2,dist-al-r2,1,
+                                      ew/2,ew/2,dist-al-r2,1, -ew/2,ew/2,dist-al-r2,1,
+                                      -ew/2,-ew/2,r1+al,1, ew/2,-ew/2,r1+al,1,
+                                      ew/2,ew/2,r1+al,1, -ew/2,ew/2,r1+al,1,
+                                      -aw/2,-aw/2,dist-al-r2,1, aw/2,-aw/2,dist-al-r2,1,
+                                      aw/2,aw/2,dist-al-r2,1, -aw/2,aw/2,dist-al-r2,1,
+                                      -aw/2,-aw/2,r1+al,1, aw/2,-aw/2,r1+al,1,
+                                      aw/2,aw/2,r1+al,1, -aw/2,aw/2,r1+al,1,
+                                      0,0,dist-r2,1, 0,0,r1,1),
+                                    c(1,2,3,4, 5,6,7,8, 1,2,6,5, 2,3,7,6, 3,4,8,7, 4,1,5,8,
+                                      9,10,11,12, 9,12,17,17, 9,10,17,17, 10,11,17,17,
+                                      11,12,17,17,
+                                      13,14,15,16, 13,16,18,18, 13,14,18,18, 14,15,18,18,
+                                      15,16,18,18))
+          }
+          
+          
+          ## rotate and shift it to its position
+          phi<- -atan2(v2[2]-v1[2],v1[1]-v2[1])-pi/2
+          psi<- acos((v2[3]-v1[3])/dist)    
+          rot1 <- rbind(c(1,0,0),c(0,cos(psi),sin(psi)), c(0,-sin(psi),cos(psi)))
+          rot2 <- rbind(c(cos(phi),sin(phi),0),c(-sin(phi),cos(phi),0), c(0,0,1))
+          rot <- rot1 %*% rot2
+          edge <- rgl::transform3d(edge, rgl::rotationMatrix(matrix=rot))
+          edge <- rgl::transform3d(edge, rgl::translationMatrix(v1[1], v1[2], v1[3]))
+          
+          ## we are ready 
+          rgl::shade3d(edge, col=ec)
+     }
+     
+     create.loop <- function(v, r, ec, ew, am, la, la2, as) {
+          aw <- 0.005*3*as
+          al <- 0.005*4*as
+          wi <- aw*2                          # size of the loop
+          wi2 <- wi+aw-ew                     # size including the arrow heads
+          hi <- al*2+ew*2
+          gap <- wi-2*ew
+          
+          if (am==0) {
+               edge <- rgl::qmesh3d(c(-wi/2,-ew/2,0,1, -gap/2,-ew/2,0,1,
+                                      -gap/2,ew/2,0,1, -wi/2,ew/2,0,1,
+                                      -wi/2,-ew/2,hi-ew+r,1, -gap/2,-ew/2,hi-ew+r,1,
+                                      -gap/2,ew/2,hi-ew+r,1, -wi/2,ew/2,hi-ew+r,1,
+                                      wi/2,-ew/2,0,1, gap/2,-ew/2,0,1,
+                                      gap/2,ew/2,0,1, wi/2,ew/2,0,1,
+                                      wi/2,-ew/2,hi-ew+r,1, gap/2,-ew/2,hi-ew+r,1,
+                                      gap/2,ew/2,hi-ew+r,1, wi/2,ew/2,hi-ew+r,1,
+                                      -wi/2,-ew/2,hi+r,1, -wi/2,ew/2,hi+r,1,
+                                      wi/2,-ew/2,hi+r,1, wi/2,ew/2,hi+r,1
+               ),
+               c(1,2,3,4, 5,6,7,8, 1,2,6,5, 2,3,7,6, 3,4,8,7,
+                 1,4,18,17,
+                 9,10,11,12, 13,14,15,16, 9,10,14,13, 10,11,15,14,
+                 11,12,16,15, 9,12,20,19,
+                 5,13,19,17, 17,18,20,19, 8,16,20,18, 6,7,15,14
+               ))
+          } else if (am==1 || am==2) {
+               edge <- rgl::qmesh3d(c(-wi/2,-ew/2,r+al,1, -gap/2,-ew/2,r+al,1,
+                                      -gap/2,ew/2,r+al,1, -wi/2,ew/2,r+al,1,
+                                      -wi/2,-ew/2,hi-ew+r,1, -gap/2,-ew/2,hi-ew+r,1,
+                                      -gap/2,ew/2,hi-ew+r,1, -wi/2,ew/2,hi-ew+r,1,
+                                      wi/2,-ew/2,0,1, gap/2,-ew/2,0,1,
+                                      gap/2,ew/2,0,1, wi/2,ew/2,0,1,
+                                      wi/2,-ew/2,hi-ew+r,1, gap/2,-ew/2,hi-ew+r,1,
+                                      gap/2,ew/2,hi-ew+r,1, wi/2,ew/2,hi-ew+r,1,
+                                      -wi/2,-ew/2,hi+r,1, -wi/2,ew/2,hi+r,1,
+                                      wi/2,-ew/2,hi+r,1, wi/2,ew/2,hi+r,1,
+                                      # the arrow
+                                      -wi2/2,-aw/2,r+al,1, -wi2/2+aw,-aw/2,r+al,1,
+                                      -wi2/2+aw,aw/2,r+al,1, -wi2/2,aw/2,r+al,1,
+                                      -wi2/2+aw/2,0,r,1                   
+               ),
+               c(1,2,3,4, 5,6,7,8, 1,2,6,5, 2,3,7,6, 3,4,8,7,
+                 1,4,18,17,
+                 9,10,11,12, 13,14,15,16, 9,10,14,13, 10,11,15,14,
+                 11,12,16,15, 9,12,20,19,
+                 5,13,19,17, 17,18,20,19, 8,16,20,18, 6,7,15,14,
+                 # the arrow
+                 21,22,23,24, 21,22,25,25, 22,23,25,25, 23,24,25,25,
+                 21,24,25,25
+               ))
+          } else if (am==3) {
+               edge <- rgl::qmesh3d(c(-wi/2,-ew/2,r+al,1, -gap/2,-ew/2,r+al,1,
+                                      -gap/2,ew/2,r+al,1, -wi/2,ew/2,r+al,1,
+                                      -wi/2,-ew/2,hi-ew+r,1, -gap/2,-ew/2,hi-ew+r,1,
+                                      -gap/2,ew/2,hi-ew+r,1, -wi/2,ew/2,hi-ew+r,1,
+                                      wi/2,-ew/2,r+al,1, gap/2,-ew/2,r+al,1,
+                                      gap/2,ew/2,r+al,1, wi/2,ew/2,r+al,1,
+                                      wi/2,-ew/2,hi-ew+r,1, gap/2,-ew/2,hi-ew+r,1,
+                                      gap/2,ew/2,hi-ew+r,1, wi/2,ew/2,hi-ew+r,1,
+                                      -wi/2,-ew/2,hi+r,1, -wi/2,ew/2,hi+r,1,
+                                      wi/2,-ew/2,hi+r,1, wi/2,ew/2,hi+r,1,
+                                      # the arrows
+                                      -wi2/2,-aw/2,r+al,1, -wi2/2+aw,-aw/2,r+al,1,
+                                      -wi2/2+aw,aw/2,r+al,1, -wi2/2,aw/2,r+al,1,
+                                      -wi2/2+aw/2,0,r,1,
+                                      wi2/2,-aw/2,r+al,1, wi2/2-aw,-aw/2,r+al,1,
+                                      wi2/2-aw,aw/2,r+al,1, wi2/2,aw/2,r+al,1,
+                                      wi2/2-aw/2,0,r,1                   
+               ),
+               c(1,2,3,4, 5,6,7,8, 1,2,6,5, 2,3,7,6, 3,4,8,7,
+                 1,4,18,17,
+                 9,10,11,12, 13,14,15,16, 9,10,14,13, 10,11,15,14,
+                 11,12,16,15, 9,12,20,19,
+                 5,13,19,17, 17,18,20,19, 8,16,20,18, 6,7,15,14,
+                 # the arrows
+                 21,22,23,24, 21,22,25,25, 22,23,25,25, 23,24,25,25,
+                 21,24,25,25,
+                 26,27,28,29, 26,27,30,30, 27,28,30,30, 28,29,30,30,
+                 26,29,30,30
+               ))
+          }
+          
+          # rotate and shift to its position
+          rot1 <- rbind(c(1,0,0),c(0,cos(la2),sin(la2)), c(0,-sin(la2),cos(la2)))
+          rot2 <- rbind(c(cos(la),sin(la),0),c(-sin(la),cos(la),0), c(0,0,1))
+          rot <- rot1 %*% rot2
+          edge <- rgl::transform3d(edge, rgl::rotationMatrix(matrix=rot))
+          edge <- rgl::transform3d(edge, rgl::translationMatrix(v[1], v[2], v[3]))
+          
+          ## we are ready
+          rgl::shade3d(edge, col=ec)
+     }
+     
+     # Visual parameters
+     params <- i.parse.plot.params(graph, list(...))
+     labels <- params("vertex", "label")
+     label.color <- params("vertex", "label.color")
+     label.font <- params("vertex", "label.font")
+     label.degree <- params("vertex", "label.degree")
+     label.dist <- params("vertex", "label.dist")
+     vertex.color <- params("vertex", "color")
+     vertex.size <- (1/200) * params("vertex", "size")
+     loop.angle <- params("edge", "loop.angle")
+     loop.angle2 <- params("edge", "loop.angle2")
+     
+     edge.color <- params("edge", "color")
+     edge.width <- (1/200) * params("edge", "width")
+     edge.labels <- params("edge","label")
+     arrow.mode <- params("edge","arrow.mode")
+     arrow.size <- params("edge","arrow.size")
+     
+     layout <- params("plot", "layout")
+     rescale <- params("plot", "rescale")
+     
+     # the new style parameters can't do this yet
+     arrow.mode         <- i.get.arrow.mode(graph, arrow.mode)
+     
+     # norm layout to (-1, 1)
+     if (ncol(layout)==2) { layout <- cbind(layout, 0) }
+     if (rescale) {
+          layout <- norm_coords(layout, -1, 1, -1, 1, -1, 1)
+     }
+     
+     # add the edges, the loops are handled separately
+     el <- as_edgelist(graph, names=FALSE)
+     
+     # It is faster this way
+     rgl::par3d(skipRedraw=TRUE)
+     
+     # edges first
+     for (i in seq(length=nrow(el))) {
+          from <- el[i,1]
+          to   <- el[i,2]
+          v1 <- layout[from,]
+          v2 <- layout[to,]
+          am <- arrow.mode; if (length(am)>1) { am <- am[i] }
+          ew <- edge.width; if (length(ew)>1) { ew <- ew[i] }
+          ec <- edge.color; if (length(ec)>1) { ec <- ec[i] }
+          r1 <- vertex.size; if (length(r1)>1) { r1 <- r1[from] }
+          r2 <- vertex.size; if (length(r2)>1) { r2 <- r2[to] }
+          
+          if (from!=to) {
+               create.edge(v1,v2,r1,r2,ec,ew,am,arrow.size)
+          } else {
+               la <- loop.angle; if (length(la)>1) { la <- la[i] }
+               la2 <- loop.angle2; if (length(la2)>1) { la2 <- la2[i] }      
+               create.loop(v1,r1,ec,ew,am,la,la2,arrow.size)
+          }
+          
+     }
+     
+     # add the vertices
+     if (length(vertex.size)==1) { vertex.size <- rep(vertex.size, nrow(layout)) }
+     rgl::rgl.spheres(layout[,1], layout[,2], layout[,3], radius=vertex.size,
+                      col=vertex.color)
+     
+     # add the labels, 'l1' is a stupid workaround of a mysterious rgl bug
+     labels[is.na(labels)] <- ""
+     x <- layout[,1]+label.dist*cos(-label.degree)* 
+          (vertex.size+6*10*log10(2))/200
+     y <- layout[,2]+label.dist*sin(-label.degree)*
+          (vertex.size+6*10*log10(2))/200
+     z <- layout[,3]
+     l1 <- labels[1]
+     labels[1] <- ""
+     rgl::rgl.texts(x,y,z, labels, col=label.color, adj=0)
+     rgl::rgl.texts(c(0,x[1]), c(0,y[1]), c(0,z[1]),
+                    c("",l1), col=c(label.color[1],label.color[1]), adj=0)
+     
+     edge.labels[is.na(edge.labels)] <- ""
+     if (any(edge.labels != "")) {
+          x0 <- layout[,1][el[,1]]
+          x1 <- layout[,1][el[,2]]
+          y0 <- layout[,2][el[,1]]
+          y1 <- layout[,2][el[,2]]
+          z0 <- layout[,3][el[,1]]
+          z1 <- layout[,4][el[,2]]
+          rgl::rgl.texts((x0+x1)/2, (y0+y1)/2, (z0+z1)/2, edge.labels,
+                         col=label.color)
+     }
+     
+     # draw everything
+     rgl::par3d(skipRedraw=FALSE)
+     
+     invisible(NULL)
+}
+
+# This is taken from the IDPmisc package,
+# slightly modified: code argument added
+
+#' @importFrom graphics par xyinch segments xspline lines polygon
+
+igraph.Arrows <-
+     function (x1, y1, x2, y2,
+               code=2,
+               size= 1,     
+               width= 1.2/4/cin,
+               open=TRUE,
+               sh.adj=0.1, 
+               sh.lwd=1,
+               sh.col=if(is.R()) par("fg") else 1,
+               sh.lty=1,
+               h.col=sh.col,
+               h.col.bo=sh.col,
+               h.lwd=sh.lwd,
+               h.lty=sh.lty,
+               curved=FALSE)
+## Author: Andreas Ruckstuhl, refined by Rene Locher
+## Version: 2005-10-17
+     {
+          cin <- size * par("cin")[2]
+          width <- width * (1.2/4/cin)
+          uin <- if (is.R()) 
+               1/xyinch()
+          else par("uin")
+          x <- sqrt(seq(0, cin^2, length = floor(35 * cin) + 2))
+          delta <-  sqrt(h.lwd)*par("cin")[2]*0.005      ## has been 0.05
+          x.arr <- c(-rev(x), -x)
+          wx2 <- width * x^2
+          y.arr <- c(-rev(wx2 + delta), wx2 + delta)
+          deg.arr <- c(atan2(y.arr, x.arr), NA)
+          r.arr <- c(sqrt(x.arr^2 + y.arr^2), NA)
+          
+          ## backup
+          bx1 <- x1 ; bx2 <- x2 ; by1 <- y1 ; by2 <- y2
+          
+          ## shaft
+          lx <- length(x1)
+          r.seg <- rep(cin*sh.adj, lx)
+          theta1 <- atan2((y1 - y2) * uin[2], (x1 - x2) * uin[1])
+          th.seg1 <- theta1 + rep(atan2(0, -cin), lx)
+          theta2 <- atan2((y2 - y1) * uin[2], (x2 - x1) * uin[1])
+          th.seg2 <- theta2 + rep(atan2(0, -cin), lx)
+          x1d <- y1d <- x2d <- y2d <- 0
+          if (code %in% c(1,3)) {
+               x2d <- r.seg*cos(th.seg2)/uin[1]
+               y2d <- r.seg*sin(th.seg2)/uin[2]
+          }
+          if (code %in% c(2,3)) {
+               x1d <- r.seg*cos(th.seg1)/uin[1]
+               y1d <- r.seg*sin(th.seg1)/uin[2]
+          }
+          if (is.logical(curved) && all(!curved) ||
+              is.numeric(curved) && all(!curved)) {
+               
+               segments(x1+x1d, y1+y1d, x2+x2d, y2+y2d, lwd=sh.lwd, col=sh.col, lty=sh.lty)
+               phi <- atan2(y1-y2, x1-x2)
+               r <- sqrt( (x1-x2)^2 + (y1-y2)^2 )
+               lc.x <- x2 + 2/3*r*cos(phi)
+               lc.y <- y2 + 2/3*r*sin(phi)
+               
+          } else {
+               if (is.numeric(curved)) {
+                    lambda <- curved
+               } else {
+                    lambda <- as.logical(curved) * 0.5
+               }
+               lambda <- rep(lambda, length.out = length(x1))
+               c.x1 <- x1+x1d
+               c.y1 <- y1+y1d
+               c.x2 <- x2+x2d
+               c.y2 <- y2+y2d
+               
+               midx <- (x1+x2)/2
+               midy <- (y1+y2)/2  
+               spx <- midx - lambda * 1/2 * (c.y2-c.y1)
+               spy <- midy + lambda * 1/2 * (c.x2-c.x1)
+               sh.col <- rep(sh.col, length=length(c.x1))
+               sh.lty <- rep(sh.lty, length=length(c.x1))
+               sh.lwd <- rep(sh.lwd, length=length(c.x1))
+               lc.x <- lc.y <- numeric(length(c.x1))
+               
+               for (i in seq_len(length(c.x1))) {
+                    ## Straight line?
+                    if (lambda[i] == 0) {
+                         segments(c.x1[i], c.y1[i], c.x2[i], c.y2[i],
+                                  lwd = sh.lwd[i], col = sh.col[i], lty = sh.lty[i])
+                         phi <- atan2(y1[i] - y2[i], x1[i] - x2[i])
+                         r <- sqrt( (x1[i] - x2[i])^2 + (y1[i] - y2[i])^2 )
+                         lc.x[i] <- x2[i] + 2/3*r*cos(phi)
+                         lc.y[i] <- y2[i] + 2/3*r*sin(phi)
+                         
+                    } else {
+                         spl <- xspline(x=c(c.x1[i],spx[i],c.x2[i]),
+                                        y=c(c.y1[i],spy[i],c.y2[i]), shape=1, draw=FALSE)
+                         lines(spl, lwd=sh.lwd[i], col=sh.col[i], lty=sh.lty[i])
+                         if (code %in% c(2,3)) {
+                              x1[i] <- spl$x[3*length(spl$x)/4]
+                              y1[i] <- spl$y[3*length(spl$y)/4]
+                         }
+                         if (code %in% c(1,3)) {
+                              x2[i] <- spl$x[length(spl$x)/4]
+                              y2[i] <- spl$y[length(spl$y)/4]
+                         }
+                         lc.x[i] <- spl$x[2/3 * length(spl$x)]
+                         lc.y[i] <- spl$y[2/3 * length(spl$y)]
+                    }
+               }
+          }
+          
+          ## forward arrowhead
+          if (code %in% c(2,3)) {    
+               theta <- atan2((by2 - y1) * uin[2], (bx2 - x1) * uin[1])
+               Rep <- rep(length(deg.arr), lx)
+               p.x2 <- rep(bx2, Rep)
+               p.y2 <- rep(by2, Rep)
+               ttheta <- rep(theta, Rep) + rep(deg.arr, lx)
+               r.arr <- rep(r.arr, lx)  
+               if(open) lines((p.x2 + r.arr * cos(ttheta)/uin[1]),
+                              (p.y2 + r.arr*sin(ttheta)/uin[2]), 
+                              lwd=h.lwd, col = h.col.bo, lty=h.lty) else
+                                   polygon(p.x2 + r.arr * cos(ttheta)/uin[1], p.y2 + r.arr*sin(ttheta)/uin[2], 
+                                           col = h.col, lwd=h.lwd,
+                                           border=h.col.bo, lty=h.lty)
+          }
+          
+          ## backward arrow head
+          if (code %in% c(1,3)) {
+               x1 <- bx1; y1 <- by1
+               tmp <- x1 ; x1 <- x2 ; x2 <- tmp
+               tmp <- y1 ; y1 <- y2 ; y2 <- tmp
+               theta <- atan2((y2 - y1) * uin[2], (x2 - x1) * uin[1])
+               lx <- length(x1)
+               Rep <- rep(length(deg.arr), lx)
+               p.x2 <- rep(x2, Rep)
+               p.y2 <- rep(y2, Rep)
+               ttheta <- rep(theta, Rep) + rep(deg.arr, lx)
+               r.arr <- rep(r.arr, lx)
+               
+               if(open) lines((p.x2 + r.arr * cos(ttheta)/uin[1]),
+                              (p.y2 + r.arr*sin(ttheta)/uin[2]), 
+                              lwd=h.lwd, col = h.col.bo, lty=h.lty) else
+                                   polygon(p.x2 + r.arr * cos(ttheta)/uin[1], p.y2 + r.arr*sin(ttheta)/uin[2], 
+                                           col = h.col, lwd=h.lwd,
+                                           border=h.col.bo, lty=h.lty)
+          }
+          
+          list(lab.x=lc.x, lab.y=lc.y)
+          
+     } # Arrows
+
+#' @importFrom graphics xspline
+
+igraph.polygon <- function(points, vertex.size=15/200, expand.by=15/200,
+                           shape=1/2, col="#ff000033", border=NA) {
+     
+     by <- expand.by
+     pp <- rbind(points,
+                 cbind(points[,1]-vertex.size-by, points[,2]),
+                 cbind(points[,1]+vertex.size+by, points[,2]),
+                 cbind(points[,1], points[,2]-vertex.size-by),
+                 cbind(points[,1], points[,2]+vertex.size+by))
+     
+     cl <- convex_hull(pp)
+     xspline(cl$rescoords, shape=shape, open=FALSE, col=col, border=border)
+}
+
+
+
+#   IGraph R package
+#   Copyright (C) 2003-2012  Gabor Csardi <csardi.gabor@gmail.com>
+#   334 Harvard street, Cambridge, MA 02139 USA
+#   
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#   
+#   You should have received a copy of the GNU General Public License
+#   along with this program; if not, write to the Free Software
+#   Foundation, Inc.,  51 Franklin Street, Fifth Floor, Boston, MA
+#   02110-1301 USA
+#
+###################################################################
+
+###################################################################
+# Common functions for plot and tkplot
+###################################################################
+
+i.parse.plot.params <- function(graph, params) {
+     
+     ## store the arguments
+     p <- list(vertex=list(), edge=list(), plot=list())
+     for (n in names(params)) {
+          if (substr(n, 1, 7)=="vertex.") {
+               nn <- substring(n, 8)
+               p[["vertex"]][[nn]] <- params[[n]]
+          } else if (substr(n, 1, 5)=="edge.") {
+               nn <- substring(n, 6)
+               p[["edge"]][[nn]] <- params[[n]]
+          } else {
+               p[["plot"]][[n]] <- params[[n]]
+          }
+     }
+     
+     func <- function(type, name, range=NULL, dontcall=FALSE) {
+          if (! type %in% names(p)) {
+               stop("Invalid plot option type")
+          }
+          ret <- function() {
+               v <- p[[type]][[name]]
+               if (is.function(v) && !dontcall) {
+                    v <- v(graph)
+               }
+               if (is.null(range)) {
+                    return (v)        
+               } else {
+                    if (length(v)==1) {
+                         return(rep(v, length(range)))
+                    } else {
+                         return (rep(v, length=max(range)+1)[[range+1]])
+                    }
+               }
+          }
+          if (name %in% names(p[[type]])) {
+               ## we already have the parameter
+               return(ret())
+          } else {
+               ## we don't have the parameter, check attributes first
+               if (type=="vertex" && name %in% vertex_attr_names(graph)) {
+                    p[[type]][[name]] <- vertex_attr(graph, name)
+                    return(ret())
+               } else if (type=="edge" && name %in% edge_attr_names(graph)) {
+                    p[[type]][[name]] <- edge_attr(graph, name)
+                    return(ret())
+               } else if (type=="plot" && name %in% graph_attr_names(graph)) {
+                    p[[type]][[name]] <- graph_attr(graph, name)
+                    return(ret())
+               } else {
+                    ## no attributes either, check igraph parameters
+                    n <- paste(sep="", type, ".", name)
+                    v <- igraph_opt(n)
+                    if (!is.null(v)) {
+                         p[[type]][[name]] <- v
+                         return(ret())
+                    }
+                    ## no igraph parameter either, use default value
+                    p[[type]][[name]] <- i.default.values[[type]][[name]]
+                    return(ret())
+               }
+          }
+          
+     }
+     
+     return (func)
+}
+
+i.get.edge.labels <- function(graph, edge.labels=NULL) {
+     
+     if (is.null(edge.labels)) {
+          edge.labels <- rep(NA, ecount(graph))
+     }
+     
+     edge.labels
+}
+
+i.get.labels <- function(graph, labels=NULL) {
+     
+     if (is.null(labels)) {
+          if ("name" %in% vertex_attr_names(graph)) {
+               labels <- vertex_attr(graph, "name")
+          } else {
+               labels <- seq_len(vcount(graph))
+          }
+     }
+     labels
+}
+
+i.get.arrow.mode <- function(graph, arrow.mode=NULL) {
+     
+     if (is.character(arrow.mode) &&
+         length(arrow.mode)==1 && substr(arrow.mode, 1, 2)=="a:") {
+          arrow.mode <- vertex_attr(graph, substring(arrow.mode,3))
+     }
+     
+     if (is.character(arrow.mode)) {
+          tmp <- numeric(length(arrow.mode))
+          tmp[ arrow.mode %in% c("<", "<-") ] <- 1
+          tmp[ arrow.mode %in% c(">", "->") ] <- 2
+          tmp[ arrow.mode %in% c("<>", "<->") ] <- 3
+          arrow.mode <- tmp
+     }
+     
+     if (is.null(arrow.mode)) {
+          if (is_directed(graph)) {
+               arrow.mode <- 2
+          } else {
+               arrow.mode <- 0
+          }
+     }
+     
+     arrow.mode
+}
+
+i.get.main <- function(graph) {
+     if (igraph_opt("annotate.plot")) {
+          n <- graph$name[1]
+          n
+     } else {
+          ""
+     }
+}
+
+i.get.xlab <- function(graph) {
+     if (igraph_opt("annotate.plot")) {
+          paste(vcount(graph), "vertices,", ecount(graph), "edges")
+     } else {
+          ""
+     }
+}
+
+igraph.check.shapes <- function(x) {
+     xx <- unique(x)
+     bad.shapes <- ! xx %in% ls(.igraph.shapes)
+     if (any(bad.shapes)) {
+          bs <- paste(xx[bad.shapes], collapse=", ")
+          stop("Bad vertex shape(s): ", bs, ".")
+     }
+     x
+}
+
+
+
+#' Optimal edge curvature when plotting graphs
+#' 
+#' If graphs have multiple edges, then drawing them as straight lines does not
+#' show them when plotting the graphs; they will be on top of each other. One
+#' solution is to bend the edges, with diffenent curvature, so that all of them
+#' are visible.
+#' 
+#' \code{curve_multiple} calculates the optimal \code{edge.curved} vector for
+#' plotting a graph with multiple edges, so that all edges are visible.
+#'
+#' @aliases autocurve.edges
+#' @param graph The input graph.
+#' @param start The curvature at the two extreme edges. All edges will have a
+#' curvature between \code{-start} and \code{start}, spaced equally.
+#' @return A numeric vector, its length is the number of edges in the graph.
+#' @author Gabor Csardi \email{csardi.gabor@@gmail.com}
+#' @seealso \code{\link{igraph.plotting}} for all plotting parameters,
+#' \code{\link{plot.igraph}}, \code{\link{tkplot}} and \code{\link{rglplot}}
+#' for plotting functions.
+#' @export
+#' @importFrom stats ave
+#' @keywords graphs
+#' @examples
+#' 
+#' g <- graph( c(0,1,1,0,1,2,1,3,1,3,1,3,
+#'               2,3,2,3,2,3,2,3,0,1)+1 )
+#' 
+#' curve_multiple(g)
+#' 
+#' \dontrun{
+#' set.seed(42)
+#' plot(g)
+#' }
+#' 
+curve_multiple <- function(graph, start=0.5) {
+     el <- apply(as_edgelist(graph, names=FALSE), 1, paste, collapse=":")
+     ave(rep(NA, length(el)), el, FUN=function(x) {
+          if (length(x) == 1) {
+               return(0)
+          } else {
+               return(seq(-start, start, length=length(x)))
+          }
+     })
+}
+
+.igraph.logo.raster <-
+     structure(c(16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 311332508L, 
+                 1217499541L, 1804702102L, 1066570390L, 211129749L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 379033495L, 1334940052L, -2104389227L, 
+                 -1450012011L, -2087546218L, 1368494484L, 412456341L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 41975936L, 1905496981L, 
+                 -141388906L, -7171435L, -7171435L, -7171435L, -325938283L, 1452380564L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 41975936L, 1905496981L, -158166379L, -7171435L, -7171435L, -7171435L, 
+                 -7171435L, -7171435L, -141389163L, 1972540052L, 41975936L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, -2037148780L, -7171435L, -24798561L, -12009013L, 
+                 -13250855L, -11616826L, -24340838L, -7171435L, 1586664085L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 311332508L, -963472747L, -7171435L, 
+                 -7171435L, -7171435L, -7171435L, -7236971L, -7171435L, -7171435L, 
+                 -7171435L, -7171435L, -946695531L, 361927314L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 798134930L, 
+                 -40791403L, -25321308L, -16061704L, -16715521L, -16715521L, -16715521L, 
+                 -15408144L, -24471653L, -258829418L, 344755353L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, -1483500650L, -7171435L, -7171435L, -7824996L, -12858668L, 
+                 -15212050L, -16519427L, -15212050L, -12858668L, -7890531L, -7171435L, 
+                 -7171435L, -1382903147L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 2056426132L, -7171435L, -13643043L, 
+                 -16715521L, -16715521L, -16715521L, -16715521L, -16715521L, -12139572L, 
+                 -7171435L, 1385337493L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 1452380564L, -7171435L, 
+                 -7171435L, -8936279L, -15800587L, -16715521L, -16715521L, -16715521L, 
+                 -16715521L, -16715521L, -15865867L, -9132373L, -7171435L, -7171435L, 
+                 1485934996L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, -1433234795L, -7171435L, -15603981L, -16715521L, -16715521L, 
+                 -16715521L, -16715521L, -16715521L, -14100510L, -7171435L, -2104389227L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, -812412011L, -7171435L, -7432808L, -15080979L, 
+                 -16715521L, -16715521L, -16715521L, -16715521L, -16715521L, -16715521L, 
+                 -16715521L, -15277585L, -7498344L, -7171435L, -694971499L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, -1919774060L, 
+                 -7171435L, -14623768L, -16715521L, -16715521L, -16715521L, -16715521L, 
+                 -16715521L, -13120041L, -7171435L, 1704104597L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 177838489L, 
+                 -74280299L, -7171435L, -10439750L, -16715521L, -16715521L, -16715521L, 
+                 -16715521L, -16715521L, -16715521L, -16715521L, -16715521L, -16715521L, 
+                 -10701380L, -7171435L, -40725867L, 211129749L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 1368494484L, -7171435L, -10374471L, 
+                 -16715521L, -16715521L, -16715521L, -16715521L, -16584963L, -9067350L, 
+                 -7171435L, 714248856L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 999527315L, -7171435L, -7171435L, 
+                 -12270386L, -16715521L, -16715521L, -16715521L, -16715521L, -16715521L, 
+                 -16715521L, -16715521L, -16715521L, -16715521L, -12531503L, -7171435L, 
+                 -7171435L, 1033015958L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 33554431L, -1080913258L, -7171435L, -10701636L, -15277329L, 
+                 -16519427L, -14885141L, -9720911L, -7171435L, -1718381676L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 1217499541L, -7171435L, -7171435L, -12793389L, -16715521L, 
+                 -16715521L, -16715521L, -16715521L, -16715521L, -16715521L, -16715521L, 
+                 -16715521L, -16715521L, -13054505L, -7171435L, -7171435L, 1251053972L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 479367826L, -929918315L, -7171435L, -7171435L, -7236971L, -7171435L, 
+                 -7171435L, -1366060139L, 227117469L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 361927314L, 
+                 -7171435L, -7171435L, -10962753L, -16715521L, -16715521L, -16715521L, 
+                 -16715521L, -16715521L, -16715521L, -16715521L, -16715521L, -16715521L, 
+                 -11289661L, -7171435L, -7171435L, 412456341L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 1536398230L, 
+                 -7171435L, -778857580L, -1013804395L, -1752067691L, 1334940052L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, -544042347L, 
+                 -7171435L, -8086625L, -16061704L, -16715521L, -16715521L, -16715521L, 
+                 -16715521L, -16715521L, -16715521L, -16715521L, -16126983L, -8217439L, 
+                 -7171435L, -426601835L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, -1097690475L, -23948651L, 
+                 579833750L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 76714645L, 1452446357L, -1986882923L, 
+                 -1785556331L, 1720881813L, 361927317L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, -2070703211L, -7171435L, 
+                 -7171435L, -10570822L, -16649985L, -16715521L, -16715521L, -16715521L, 
+                 -16715521L, -16715521L, -16649985L, -10636101L, -7171435L, -7171435L, 
+                 -2020503147L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 596808338L, -23948651L, -1114467692L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 747803285L, -829255019L, -7171435L, -7171435L, -7171435L, 
+                 -7171435L, -326004074L, 1418891925L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 127046290L, -728591723L, -7171435L, -7171435L, 
+                 -9786446L, -15603981L, -16715521L, -16715521L, -16715521L, -15538958L, 
+                 -9655375L, -7171435L, -7171435L, -661482859L, 144678815L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 -2053991786L, -7171435L, 1502778005L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 278041237L, -443444587L, 
+                 -7171435L, -10963009L, -14492954L, -15015956L, -12335666L, -24340839L, 
+                 -40725867L, 999461525L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 848598164L, -225275243L, -7171435L, -7171435L, -7171435L, 
+                 -8347998L, -9720911L, -8348254L, -7171435L, -7171435L, -7171435L, 
+                 -225275243L, 949129878L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 61516458L, -443379051L, -292384107L, 
+                 127046290L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, -1835887979L, -7171435L, -12008757L, -16715521L, 
+                 -16715521L, -16715521L, -16715521L, -14492954L, -24013930L, -745368939L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 546279319L, -1114467692L, -7171435L, -7171435L, -7171435L, -7171435L, 
+                 -7171435L, -7171435L, -7171435L, -1064136043L, 546279319L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 1301451413L, -7171435L, -1835822188L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 -795700587L, -24340838L, -16519427L, -16715521L, -16715521L, 
+                 -16715521L, -16715521L, -16715521L, -9917004L, -7171435L, 361927317L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 33554431L, 1469289365L, -1752067691L, -896363883L, -242052459L, 
+                 -141389163L, -7171435L, -309095531L, 429496729L, 1301451413L, 
+                 -2104389227L, -1215130987L, -879586667L, -1701670251L, 1704104597L, 
+                 798134930L, 75530368L, 16777215L, -1332571499L, -7171435L, 798134930L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, -174943595L, -9067350L, -16715521L, -16715521L, 
+                 -16715521L, -16715521L, -16715521L, -16715521L, -11420476L, -7171435L, 
+                 999461525L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 -1986948715L, -7171435L, -7171435L, -7171435L, -7171435L, -7171435L, 
+                 -7171435L, -7171435L, -7171435L, -7171435L, -7171435L, -158166379L, 
+                 -1517120875L, -74280299L, -879586667L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, -812477803L, -24340839L, -16519427L, -16715521L, -16715521L, 
+                 -16715521L, -16715521L, -16715521L, -9851469L, -7171435L, 328372885L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 261724569L, -1248685419L, 
+                 -7171435L, -7171435L, -7171435L, -7171435L, -7171435L, -7566182L, 
+                 -8355679L, -7171435L, -7171435L, -7171435L, -7171435L, -7171435L, 
+                 -7171435L, -1869376618L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, -1902996843L, 
+                 -7171435L, -11681849L, -16715521L, -16715521L, -16715521L, -16715521L, 
+                 -14166045L, -7236714L, -208498027L, 882086803L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 1150456470L, -493710699L, -7171435L, -7171435L, -7303018L, 
+                 -10789959L, -13026608L, -14934812L, -16513548L, -16645131L, -15921426L, 
+                 -14013478L, -11973946L, -8618845L, -7171435L, -7171435L, -23948651L, 
+                 -1768779114L, 144678815L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 227709589L, -544107883L, -7171435L, 
+                 -10570822L, -13969951L, -14492954L, -11943478L, -24210280L, -23948651L, 
+                 -7171435L, -23948651L, -1517186668L, 529831060L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 596808338L, -174943595L, 
+                 -7171435L, -7171435L, -8684636L, -14605855L, -16645131L, -16645131L, 
+                 -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, 
+                 -16316174L, -11382080L, -7237226L, -7171435L, -7171435L, -1852665195L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 663917205L, -929918315L, -7171435L, -7171435L, 
+                 -7171435L, -7171435L, -393112938L, 1284674197L, 1049661588L, 
+                 -879586667L, -7171435L, -141389163L, -1986948715L, 261724569L, 
+                 16777215L, 16777215L, 16777215L, 41975936L, -1013804395L, -7171435L, 
+                 -7171435L, -11184706L, -16316174L, -16645131L, -16645131L, -16645131L, 
+                 -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, 
+                 -16645131L, -16645131L, -14342690L, -8158305L, -7171435L, -23948651L, 
+                 1066570390L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 59937429L, 1234342549L, 2140312213L, 
+                 -1936551275L, 1486000789L, 294818453L, 16777215L, 16777215L, 
+                 33554431L, 1519621014L, -527265131L, -7171435L, -342715755L, 
+                 1821545109L, 93952409L, 16777215L, 1922142614L, -7171435L, -7171435L, 
+                 -9868880L, -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, 
+                 -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, 
+                 -16645131L, -16645131L, -16645131L, -14210851L, -7237227L, -7171435L, 
+                 -560819563L, 211129749L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 144678815L, 1989383061L, -258829675L, -7171435L, -644705643L, 
+                 1804767894L, -141389163L, -7171435L, -7829349L, -15658261L, -16645131L, 
+                 -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, 
+                 -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, 
+                 -16645131L, -16645131L, -11184706L, -7171435L, -7171435L, -1785622123L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 344755353L, -1835822188L, -91057515L, -7171435L, -7171435L, 
+                 -7171435L, -13289772L, -16645131L, -16645131L, -16645131L, -16645131L, 
+                 -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, 
+                 -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, 
+                 -16250383L, -8421470L, -7171435L, -292384107L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 647271572L, -409824619L, -7171435L, -7566183L, -16513548L, 
+                 -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, 
+                 -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, 
+                 -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, -11447872L, 
+                 -7171435L, -7171435L, 613782933L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 -460090475L, -7171435L, -9342293L, -16645131L, -16645131L, -16645131L, 
+                 -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, 
+                 -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, 
+                 -16645131L, -16645131L, -16645131L, -13421357L, -7171435L, -7171435L, 
+                 1502778005L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 965907093L, -1785556331L, -879586667L, -158166379L, -695037291L, 
+                 -1584229739L, 1435669141L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 412456341L, -7171435L, 
+                 -7171435L, -11184706L, -16645131L, -16645131L, -16645131L, -16645131L, 
+                 -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, 
+                 -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, 
+                 -16645131L, -16645131L, -15263513L, -7171435L, -7171435L, -1903062635L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 143823509L, -1936551275L, -40725867L, 
+                 -7171435L, -7171435L, -7171435L, -7171435L, -7171435L, -7171435L, 
+                 -1299017067L, 412258965L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 1200853907L, -7171435L, -7171435L, -12895025L, 
+                 -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, 
+                 -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, 
+                 -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, 
+                 -16579339L, -7566183L, -7171435L, -1114467692L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, -1231908203L, -7171435L, -7171435L, -7171435L, -8282719L, 
+                 -9655375L, -8544092L, -7236714L, -7171435L, -7171435L, -577596779L, 
+                 194155157L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 747737495L, -7171435L, -7171435L, -11908411L, -16645131L, -16645131L, 
+                 -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, 
+                 -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, 
+                 -16645131L, -16645131L, -16645131L, -16645131L, -15987217L, -7171435L, 
+                 -7171435L, -1483566443L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 1720881813L, -7171435L, 
+                 -7171435L, -8348254L, -14231324L, -16715521L, -16715521L, -16715521L, 
+                 -15212050L, -9263188L, -7171435L, -7171435L, -1768779115L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 61516458L, -158166379L, 
+                 -7171435L, -10000462L, -16645131L, -16645131L, -16645131L, -16645131L, 
+                 -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, 
+                 -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, 
+                 -16645131L, -16645131L, -14145060L, -7171435L, -7171435L, -91057515L, 
+                 -1315794284L, 1603375510L, 295081622L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 127046293L, -242052459L, -7171435L, -7629158L, 
+                 -15538958L, -16715521L, -16715521L, -16715521L, -16715521L, -16715521L, 
+                 -16519427L, -8740442L, -7171435L, -23948651L, 747803285L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, -963472747L, -7171435L, 
+                 -8158305L, -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, 
+                 -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, 
+                 -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, 
+                 -16645131L, -12237111L, -7171435L, -7171435L, -7171435L, -7171435L, 
+                 -7171435L, -74280299L, -1164865131L, 1754502038L, 412456341L, 
+                 16777215L, 915575445L, -7171435L, -7171435L, -12008757L, -16715521L, 
+                 -16715521L, -16715521L, -16715521L, -16715521L, -16715521L, -16715521L, 
+                 -13773857L, -7171435L, -7171435L, 1720881813L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, -1819110763L, -7171435L, -7171435L, 
+                 -15263513L, -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, 
+                 -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, 
+                 -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, 
+                 -9868879L, -7171435L, -74280299L, 1368560277L, -1651338603L, 
+                 -325938539L, -7171435L, -7171435L, -7171435L, -40725867L, -1013804395L, 
+                 -1382903147L, -7171435L, -7171435L, -14100510L, -16715521L, -16715521L, 
+                 -16715521L, -16715521L, -16715521L, -16715521L, -16715521L, -16061960L, 
+                 -7171435L, -7171435L, -1668115819L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 1402180499L, -7171435L, -7171435L, -9539923L, 
+                 -16579339L, -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, 
+                 -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, 
+                 -16645131L, -16645131L, -16645131L, -16645131L, -13816104L, -7171435L, 
+                 -7171435L, -946695531L, 16777215L, 16777215L, 61516458L, 1116967831L, 
+                 -1802333548L, -460090475L, -7171435L, -7171435L, -7171435L, -7171435L, 
+                 -7171435L, -14558233L, -16715521L, -16715521L, -16715521L, -16715521L, 
+                 -16715521L, -16715521L, -16715521L, -16388613L, -7302250L, -7171435L, 
+                 -1433234795L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, -1198353770L, -7171435L, -7171435L, -12500278L, -16645131L, 
+                 -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, 
+                 -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, 
+                 -16645131L, -15987217L, -8092514L, -7171435L, -74280299L, 898666645L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 33554431L, 
+                 949129878L, -1970105706L, -443379050L, -7171435L, -7171435L, 
+                 -12793389L, -16715521L, -16715521L, -16715521L, -16715521L, -16715521L, 
+                 -16715521L, -16715521L, -14558233L, -7171435L, -7171435L, 1972540053L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 479367826L, -258829675L, -7171435L, -7500391L, -14737438L, -16645131L, 
+                 -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, 
+                 -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, -16447757L, 
+                 -10263627L, -7171435L, -7171435L, -2070703211L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 294818453L, -23948651L, -7171435L, -8478812L, -16323334L, 
+                 -16715521L, -16715521L, -16715521L, -16715521L, -16715521L, -16715521L, 
+                 -9917005L, -7171435L, -7171435L, 1083347605L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 1603375510L, 
+                 -7171435L, -7171435L, -7434600L, -12237111L, -16513548L, -16645131L, 
+                 -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, -16645131L, 
+                 -16645131L, -16645131L, -15000603L, -9013337L, -7171435L, -7171435L, 
+                 -778923371L, 109084842L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 -1768779115L, -7171435L, -7171435L, -10178634L, -16061960L, -16715521L, 
+                 -16715521L, -16715521L, -16388612L, -11224382L, -7171435L, -7171435L, 
+                 -997027179L, 43160213L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 33554431L, -728591723L, -7171435L, 
+                 -7171435L, -7171435L, -9276502L, -14605855L, -16513549L, -16645131L, 
+                 -16645131L, -16645131L, -16645131L, -16645131L, -15789843L, -12171320L, 
+                 -7368809L, -7171435L, -7171435L, -376270187L, 781226134L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 194155157L, -577596779L, 
+                 -7171435L, -7171435L, -7890531L, -10636100L, -12335666L, -11028288L, 
+                 -8413533L, -7171435L, -7171435L, -174943595L, 613585557L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 33554431L, 579833750L, 261724569L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 160337550L, -1416457579L, -7171435L, -7171435L, -124611948L, 
+                 -7171435L, -7171435L, -7171435L, -7500391L, -9342293L, -11316288L, 
+                 -12171320L, -10263627L, -8355679L, -7171435L, -7171435L, -7171435L, 
+                 -7171435L, -1416457579L, 344755353L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 647139989L, -913141099L, 
+                 -7171435L, -7171435L, -7171435L, -7171435L, -7171435L, -7171435L, 
+                 -7171435L, -476933483L, 1150456469L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 1184010901L, -1131244907L, 
+                 -275606891L, -7171435L, -23948651L, -644705643L, -1768779114L, 
+                 311332508L, 16777215L, 16777215L, 16777215L, 16777215L, 379033495L, 
+                 -929852523L, -7171435L, -23948651L, 2056426132L, 428838809L, 
+                 -1282305642L, -7171435L, -7171435L, -7171435L, -7171435L, -7171435L, 
+                 -7171435L, -7171435L, -7171435L, -7171435L, -7171435L, -325938539L, 
+                 1485934996L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 59937429L, 
+                 2039648917L, -711814507L, -40725867L, -7171435L, -7171435L, -510487915L, 
+                 -1752001899L, 261264021L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 211129749L, -1701670251L, -7171435L, -7171435L, 
+                 -7171435L, -7171435L, -7171435L, -7171435L, -7171435L, -426601835L, 
+                 1234408342L, 16777215L, 16777215L, 697274261L, -544042347L, -7171435L, 
+                 -124611947L, 1485934996L, 16777215L, 16777215L, 16777215L, 1167365268L, 
+                 -2137943659L, -1248619627L, -376270187L, -7171435L, -7171435L, 
+                 -91057515L, -846032235L, -1752067691L, 1653772948L, 395350160L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 227709589L, 949129877L, 378704533L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, -1550741099L, -7171435L, -7171435L, -8021089L, 
+                 -11616570L, -13446949L, -12662830L, -10178634L, -7171435L, -7171435L, 
+                 -91057515L, 831689367L, 1133613460L, -275606891L, -7171435L, 
+                 -342715755L, 999527315L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 529831060L, 865178006L, 
+                 144678815L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 1368494484L, -7171435L, -7171435L, -9851725L, -15996425L, -16715521L, 
+                 -16715521L, -16715521L, -16715521L, -13904672L, -7563622L, -7171435L, 
+                 -476933483L, -91057514L, -7171435L, -644705643L, 613782933L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, -846032235L, 
+                 -7171435L, -8217439L, -16061704L, -16715521L, -16715521L, -16715521L, 
+                 -16715521L, -16715521L, -16715521L, -12727853L, -7171435L, -7171435L, 
+                 -7171435L, -1030581611L, 311332508L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 109084842L, -91057515L, -7171435L, -12139828L, 
+                 -16715521L, -16715521L, -16715521L, -16715521L, -16715521L, -16715521L, 
+                 -16715521L, -16649985L, -7890531L, -7171435L, -695037291L, 109084842L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 831689367L, -7171435L, -7171435L, -13970208L, -16715521L, -16715521L, 
+                 -16715521L, -16715521L, -16715521L, -16715521L, -16715521L, -16715521L, 
+                 -9720911L, -7171435L, -1080913258L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 596808338L, -7171435L, 
+                 -7171435L, -13512485L, -16715521L, -16715521L, -16715521L, -16715521L, 
+                 -16715521L, -16715521L, -16715521L, -16715521L, -9197652L, -7171435L, 
+                 -1299017067L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 33554431L, -258829675L, -7171435L, -11355453L, 
+                 -16715521L, -16715521L, -16715521L, -16715521L, -16715521L, -16715521L, 
+                 -16715521L, -16192519L, -7498343L, -7171435L, 2089980564L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, -1265462635L, -7171435L, -7367273L, -14950677L, -16715521L, 
+                 -16715521L, -16715521L, -16715521L, -16715521L, -16715521L, -10897730L, 
+                 -7171435L, -7171435L, 1049661588L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 630296984L, 
+                 -174943595L, -7171435L, -8086625L, -14100766L, -16715521L, -16715521L, 
+                 -16715521L, -16323077L, -11028288L, -7171435L, -7171435L, -1550741099L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 1821545109L, -7171435L, 
+                 -7171435L, -7236971L, -8740186L, -10439750L, -9655375L, -7825252L, 
+                 -7171435L, -7171435L, -476933483L, 277843855L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 1385337493L, -376270187L, -7171435L, 
+                 -7171435L, -7171435L, -7171435L, -7171435L, -7171435L, -1332571499L, 
+                 395350160L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 344755353L, 1922142614L, -1533898091L, 
+                 -728591723L, -1080913258L, -1903062635L, 1284805780L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 16777215L, 
+                 16777215L, 16777215L, 16777215L), .Dim = c(64L, 64L), class = "nativeRaster", channels = 4L)
+
+
+i.vertex.default <- list(color=1,
+                         size=15,
+                         size2=15,
+                         label=i.get.labels,
+                         label.degree=-pi/4,
+                         label.color="darkblue",
+                         label.dist=0,
+                         label.family="serif",
+                         label.font=1,
+                         label.cex=1,
+                         frame.color="black",
+                         shape="circle",
+                         pie=1,
+                         pie.color=list(c("white", "lightblue", "mistyrose",
+                                          "lightcyan", "lavender", "cornsilk")),
+                         pie.border=list(c("white", "lightblue","mistyrose",
+                                           "lightcyan", "lavender", "cornsilk")),
+                         pie.angle=45,
+                         pie.density=-1,
+                         pie.lty=1,
+                         raster=.igraph.logo.raster)
+
+i.edge.default <- list(color="darkgrey",
+                       label=i.get.edge.labels,
+                       lty=1,
+                       width=1,
+                       loop.angle=0,
+                       loop.angle2=0,
+                       label.family="serif",
+                       label.font=1,
+                       label.cex=1,
+                       label.color="darkblue",
+                       label.x=NULL,
+                       label.y=NULL,
+                       arrow.size=1,
+                       arrow.mode=i.get.arrow.mode,
+                       curved=curve_multiple,
+                       arrow.width=1)
+
+i.plot.default <- list(palette=categorical_pal(8),
+                       layout=layout_nicely,
+                       margin=c(0,0,0,0),
+                       rescale=TRUE,
+                       asp=1,
+                       frame=FALSE,
+                       main=i.get.main,
+                       sub="",
+                       xlab=i.get.xlab,
+                       ylab="")
+
+i.default.values <- new.env()
+
+i.default.values[["vertex"]] <- i.vertex.default
+i.default.values[["edge"]]   <- i.edge.default
+i.default.values[["plot"]]   <- i.plot.default
+
+
+
+
+
+#   IGraph R package
+#   Copyright (C) 2003-2012  Gabor Csardi <csardi.gabor@gmail.com>
+#   334 Harvard street, Cambridge, MA 02139 USA
+#   
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#   
+#   You should have received a copy of the GNU General Public License
+#   along with this program; if not, write to the Free Software
+#   Foundation, Inc.,  51 Franklin Street, Fifth Floor, Boston, MA
+#   02110-1301 USA
+#
+###################################################################
+
+###################################################################
+## API design
+##
+## A vertex shape is defined by two functions: the clipping function and
+## the plotting function.
+##
+## The clipping function is called to determine where to put the
+## arrowhead of a potential (incoming) incident edge. Its signature is
+##    function(coords, el, params, end=c("both", "from", "to"))
+## where the arguments are:
+##    coords    A matrix with one row for each edge, and four columns.
+##              It contains the coordinates of the end points of all
+##              edges. The first two columns are the coordinates of the
+##              first end points (sources, if the graph is directed),
+##              the last two columns are for the other end points
+##              (targets if the graph is directed).
+##    el        The edge list itself, with vertex ids.
+##    params    A function object to query plotting parameters.
+##    end       Which end points to calculate. "both" means both,
+##              "from" means the first end point, "to" the second.
+## The clipping function must return the new version of "coords",
+## modified according to the vertex sizes/shapes, with proper positions
+## for the potential arrow heads. The positions are for the tips of the
+## arrows.
+##
+## The plotting function plots the vertex. Its signature is
+##    function(coords, v=NULL, params)
+## where the arguments are
+##    coords    Two column matrix, the coordinates for the vertices to draw.
+##    v         The vertex ids of the vertices to draw. If NULL, then all
+##              vertices are drawn.
+##    params    A function object to query plotting parameters.
+## 
+## shapes()         - lists all vertex shapes
+## shapes(shape)    - returns the clipping and plotting functions
+##                           for a given vertex shape
+## add_shape()             - adds a new vertex shape, the clipping and
+##                           plotting functions must be given, and
+##                           optionally the newly introduced plotting
+##                           parameters. This function can also be used
+##                           to overwrite a given vertex shape.
+##
+## Examples:
+## add_shape("image", clip=image.clip, plot=image.plot,
+##                   parameters=list(filename=NA))
+##
+## add_shape("triangle", clip=shapes("circle")$clip,
+##                   plot=triangle.plot)
+##
+## add_shape("polygon", clip=shapes("circle")$clip,
+##                   plot=polygon.plot)
+##
+###################################################################
+
+#' Various vertex shapes when plotting igraph graphs
+#'
+#' Starting from version 0.5.1 igraph supports different
+#' vertex shapes when plotting graphs.
+#'
+#' @details
+#' In igraph a vertex shape is defined by two functions: 1) provides
+#' information about the size of the shape for clipping the edges and 2)
+#' plots the shape if requested. These functions are called \dQuote{shape
+#'   functions} in the rest of this manual page. The first one is the
+#' clipping function and the second is the plotting function.
+#'
+#' The clipping function has the following arguments:
+#' \describe{
+#'   \item{coords}{A matrix with four columns, it contains the
+#'     coordinates of the vertices for the edge list supplied in the
+#'     \code{el} argument.}
+#'   \item{el}{A matrix with two columns, the edges of which some end
+#'     points will be clipped. It should have the same number of rows as
+#'     \code{coords}.}
+#'   \item{params}{This is a function object that can be called to query
+#'     vertex/edge/plot graphical parameters. The first argument of the
+#'     function is \dQuote{\code{vertex}}, \dQuote{\code{edge}} or
+#'     \dQuote{\code{plot}} to decide the type of the parameter, the
+#'     second is a character string giving the name of the
+#'     parameter. E.g.
+#'     \preformatted{
+#'	params("vertex", "size")
+#'     }
+#'   }
+#'   \item{end}{Character string, it gives which end points will be
+#'     used. Possible values are \dQuote{\code{both}},
+#'     \dQuote{\code{from}} and \dQuote{\code{to}}. If
+#'     \dQuote{\code{from}} the function is expected to clip the
+#'     first column in the \code{el} edge list, \dQuote{\code{to}}
+#'     selects the second column, \dQuote{\code{both}} selects both.}
+#' }
+#'
+#' The clipping function should return a matrix
+#' with the same number of rows as the \code{el} arguments.
+#' If \code{end} is \code{both} then the matrix must have four
+#' columns, otherwise two. The matrix contains the modified coordinates,
+#' with the clipping applied.
+#'
+#' The plotting function has the following arguments:
+#' \describe{
+#'   \item{coords}{The coordinates of the vertices, a matrix with two
+#'     columns.}
+#'   \item{v}{The ids of the vertices to plot. It should match the number
+#'     of rows in the \code{coords} argument.}
+#'   \item{params}{The same as for the clipping function, see above.}
+#' }
+#'
+#' The return value of the plotting function is not used.
+#'
+#' \code{shapes} can be used to list the names of all installed
+#' vertex shapes, by calling it without arguments, or setting the
+#' \code{shape} argument to \code{NULL}. If a shape name is given, then
+#' the clipping and plotting functions of that shape are returned in a
+#' named list.
+#'
+#' \code{add_shape} can be used to add new vertex shapes to
+#' igraph. For this one must give the clipping and plotting functions of
+#' the new shape. It is also possible to list the plot/vertex/edge
+#' parameters, in the \code{parameters} argument, that the clipping
+#' and/or plotting functions can make use of. An example would be a
+#' generic regular polygon shape, which can have a parameter for the
+#' number of sides.
+#'
+#' \code{shape_noclip} is a very simple clipping function that the
+#' user can use in their own shape definitions. It does no clipping, the
+#' edges will be drawn exactly until the listed vertex position
+#' coordinates.
+#'
+#' \code{shape_noplot} is a very simple (and probably not very
+#' useful) plotting function, that does not plot anything.
+#'
+#' @aliases add.vertex.shape igraph.shape.noclip igraph.shape.noplot
+#'   vertex.shapes igraph.vertex.shapes
+#'
+#' @param shape Character scalar, name of a vertex shape. If it is
+#'    \code{NULL} for \code{shapes}, then the names of all defined
+#'    vertex shapes are returned.
+#' @param clip An R function object, the clipping function.
+#' @param plot An R function object, the plotting function.
+#' @param parameters Named list, additional plot/vertex/edge
+#'    parameters. The element named define the new parameters, and the
+#'    elements themselves define their default values.
+#'    Vertex parameters should have a prefix
+#'    \sQuote{\code{vertex.}}, edge parameters a prefix
+#'    \sQuote{\code{edge.}}. Other general plotting parameters should have
+#'    a prefix \sQuote{\code{plot.}}. See Details below.
+#' @param coords,el,params,end,v See parameters of the clipping/plotting
+#'    functions below.
+#' @return \code{shapes} returns a character vector if the
+#'    \code{shape} argument is \code{NULL}. It returns a named list with
+#'    entries named \sQuote{clip} and \sQuote{plot}, both of them R
+#'    functions.
+#'
+#'    \code{add_shape} returns \code{TRUE}, invisibly.
+#'
+#'    \code{shape_noclip} returns the appropriate columns of its
+#'    \code{coords} argument.
+#' @export
+#'
+#' @examples
+#' # all vertex shapes, minus "raster", that might not be available
+#' shapes <- setdiff(shapes(), "")
+#' g <- make_ring(length(shapes))
+#' set.seed(42)
+#' plot(g, vertex.shape=shapes, vertex.label=shapes, vertex.label.dist=1,
+#'      vertex.size=15, vertex.size2=15,
+#'      vertex.pie=lapply(shapes, function(x) if (x=="pie") 2:6 else 0),
+#'      vertex.pie.color=list(heat.colors(5)))
+#'
+#' # add new vertex shape, plot nothing with no clipping
+#' add_shape("nil")
+#' plot(g, vertex.shape="nil")
+#'
+#' #################################################################
+#' # triangle vertex shape
+#' mytriangle <- function(coords, v=NULL, params) {
+#'   vertex.color <- params("vertex", "color")
+#'   if (length(vertex.color) != 1 && !is.null(v)) {
+#'     vertex.color <- vertex.color[v]
+#'   }
+#'   vertex.size <- 1/200 * params("vertex", "size")
+#'   if (length(vertex.size) != 1 && !is.null(v)) {
+#'     vertex.size <- vertex.size[v]
+#'   }
+#'
+#'   symbols(x=coords[,1], y=coords[,2], bg=vertex.color,
+#'           stars=cbind(vertex.size, vertex.size, vertex.size),
+#'           add=TRUE, inches=FALSE)
+#' }
+#' # clips as a circle
+#' add_shape("triangle", clip=shapes("circle")$clip,
+#'                  plot=mytriangle)
+#' plot(g, vertex.shape="triangle", vertex.color=rainbow(vcount(g)),
+#'      vertex.size=seq(10,20,length=vcount(g)))
+#'
+#' #################################################################
+#' # generic star vertex shape, with a parameter for number of rays
+#' mystar <- function(coords, v=NULL, params) {
+#'   vertex.color <- params("vertex", "color")
+#'   if (length(vertex.color) != 1 && !is.null(v)) {
+#'     vertex.color <- vertex.color[v]
+#'   }
+#'   vertex.size  <- 1/200 * params("vertex", "size")
+#'   if (length(vertex.size) != 1 && !is.null(v)) {
+#'     vertex.size <- vertex.size[v]
+#'   }
+#'   norays <- params("vertex", "norays")
+#'   if (length(norays) != 1 && !is.null(v)) {
+#'     norays <- norays[v]
+#'   }
+#'
+#'   mapply(coords[,1], coords[,2], vertex.color, vertex.size, norays,
+#'          FUN=function(x, y, bg, size, nor) {
+#'            symbols(x=x, y=y, bg=bg,
+#'                    stars=matrix(c(size,size/2), nrow=1, ncol=nor*2),
+#'                    add=TRUE, inches=FALSE)
+#'          })
+#' }
+#' # no clipping, edges will be below the vertices anyway
+#' add_shape("star", clip=shape_noclip,
+#'                  plot=mystar, parameters=list(vertex.norays=5))
+#' plot(g, vertex.shape="star", vertex.color=rainbow(vcount(g)),
+#'      vertex.size=seq(10,20,length=vcount(g)))
+#' plot(g, vertex.shape="star", vertex.color=rainbow(vcount(g)),
+#'      vertex.size=seq(10,20,length=vcount(g)),
+#'      vertex.norays=rep(4:8, length=vcount(g)))
+#'
+#' #################################################################
+#' # Pictures as vertices.
+#' # Similar musicians from last.fm, we start from an artist and
+#' # will query two levels. We will use the XML, png and jpeg packages
+#' # for this, so these must be available. Otherwise the example is
+#' # skipped
+#'
+#' loadIfYouCan <- function(pkg) suppressWarnings(do.call(require, list(pkg)))
+#'
+#' if (loadIfYouCan("XML") && loadIfYouCan("png") &&
+#'     loadIfYouCan("jpeg")) {
+#'   url <- paste(sep="",
+#'                'http://ws.audioscrobbler.com/',
+#'                '2.0/?method=artist.getinfo&artist=%s',
+#'                '&api_key=1784468ada3f544faf9172ee8b99fca3')
+#'   getartist <- function(artist) {
+#'     cat("Downloading from last.fm. ... ")
+#'     txt <- readLines(sprintf(url, URLencode(artist)))
+#'     xml <- xmlTreeParse(txt, useInternal=TRUE)
+#'     img <- xpathSApply(xml, "/lfm/artist/image[@@size='medium'][1]",
+#'                        xmlValue)
+#'     if (img != "") {
+#'       con <- url(img, open="rb")
+#'       bin <- readBin(con, what="raw", n=10^6)
+#'       close(con)
+#'       if (grepl("\\\\.png$", img)) {
+#'         rast <- readPNG(bin, native=TRUE)
+#'       } else if (grepl("\\\\.jpe?g$", img)) {
+#'         rast <- readJPEG(bin, native=TRUE)
+#'       } else {
+#'         rast <- as.raster(matrix())
+#'       }
+#'     } else {
+#'       rast <- as.raster(numeric())
+#'     }
+#'     sim <- xpathSApply(xml, "/lfm/artist/similar/artist/name", xmlValue)
+#'     cat("done.\\n")
+#'     list(name=artist, image=rast, similar=sim)
+#'   }
+#'
+#'   ego <- getartist("Placebo")
+#'   similar <- lapply(ego$similar, getartist)
+#'
+#'   edges1 <- cbind(ego$name, ego$similar)
+#'   edges2 <- lapply(similar, function(x) cbind(x$name, x$similar))
+#'   edges3 <- rbind(edges1, do.call(rbind, edges2))
+#'   edges <- edges3[ edges3[,1] %in% c(ego$name, ego$similar) &
+#'                    edges3[,2] %in% c(ego$name, ego$similar), ]
+#'
+#'   musnet <- simplify(graph_from_data_frame(edges, dir=FALSE,
+#'                      vertices=data.frame(name=c(ego$name, ego$similar))))
+#'   print_all(musnet)
+#'
+#'   V(musnet)$raster <- c(list(ego$image), lapply(similar, "[[", "image"))
+#'   plot(musnet, layout=layout_as_star, vertex.shape="raster",
+#'        vertex.label=V(musnet)$name, margin=.2,
+#'        vertex.size=50, vertex.size2=50,
+#'        vertex.label.dist=2, vertex.label.degree=0)
+#' } else {
+#'   message("You need the `XML', `png' and `jpeg' packages to run this")
+#' }
+
+shapes <- function(shape=NULL) {
+     if (is.null(shape)) {
+          ls(.igraph.shapes)
+     } else {
+          ## checkScalarString(shape)
+          .igraph.shapes[[shape]]
+     }
+}
+
+#' @rdname shapes
+#' @export
+
+shape_noclip <- function(coords, el, params,
+                         end=c("both", "from", "to")) {
+     end <- igraph.match.arg(end)
+     
+     if (end=="both") {
+          coords
+     } else if (end=="from") {
+          coords[,1:2,drop=FALSE]
+     } else {
+          coords[,3:4,drop=FALSE]
+     }
+}
+
+#' @rdname shapes
+#' @export
+
+shape_noplot <- function(coords, v=NULL, params) {
+     invisible(NULL)
+}
+
+#' @rdname shapes
+#' @export
+
+add_shape <- function(shape, clip=shape_noclip,
+                      plot=shape_noplot,
+                      parameters=list()) {
+     
+     ## TODO
+     ## checkScalarString(shape)
+     ## checkFunction(clip)
+     ## checkFunction(plot)
+     ## checkList(parameters, named=TRUE)
+     
+     assign(shape, value=list(clip=clip, plot=plot), envir=.igraph.shapes)
+     do.call(igraph.options, parameters)
+     invisible(TRUE)
+}
+
+## These are the predefined shapes
+
+.igraph.shape.circle.clip <- function(coords, el, params,
+                                      end=c("both", "from", "to")) {
+     
+     end <- match.arg(end)
+     
+     if (length(coords)==0) { return (coords) }     
+     
+     vertex.size <- 1/200 * params("vertex", "size")
+     
+     if (end=="from") {
+          phi <- atan2(coords[,4] - coords[,2], coords[,3] - coords[,1])
+          vsize.from <- if (length(vertex.size)==1) {
+               vertex.size
+          } else {
+               vertex.size[ el[,1] ]
+          }
+          res <- cbind(coords[,1] + vsize.from*cos(phi),
+                       coords[,2] + vsize.from*sin(phi) )
+     } else if (end=="to") {
+          phi <- atan2(coords[,4] - coords[,2], coords[,3] - coords[,1])
+          r <- sqrt( (coords[,3] - coords[,1])^2 + (coords[,4] - coords[,2])^2 )
+          vsize.to <- if (length(vertex.size)==1) {
+               vertex.size
+          } else {
+               vertex.size[ el[,2] ]
+          }
+          res <- cbind(coords[,1] + (r-vsize.to)*cos(phi),
+                       coords[,2] + (r-vsize.to)*sin(phi) )
+     } else if (end=="both") {
+          phi <- atan2(coords[,4] - coords[,2], coords[,3] - coords[,1])
+          r <- sqrt( (coords[,3] - coords[,1])^2 + (coords[,4] - coords[,2])^2 )
+          vsize.from <- if (length(vertex.size)==1) {
+               vertex.size
+          } else {
+               vertex.size[ el[,1] ]
+          }
+          vsize.to <- if (length(vertex.size)==1) {
+               vertex.size
+          } else {
+               vertex.size[ el[,2] ]
+          }
+          res <- cbind(coords[,1] + vsize.from*cos(phi),
+                       coords[,2] + vsize.from*sin(phi),
+                       coords[,1] + (r-vsize.to)*cos(phi),
+                       coords[,2] + (r-vsize.to)*sin(phi) )
+     }
+     res
+}
+
+#' @importFrom graphics symbols
+
+.igraph.shape.circle.plot <- function(coords, v=NULL, params) {
+     
+     vertex.color       <- params("vertex", "color")
+     if (length(vertex.color) != 1 && !is.null(v)) {
+          vertex.color <- vertex.color[v]
+     }
+     vertex.frame.color <- params("vertex", "frame.color")
+     if (length(vertex.frame.color) != 1 && !is.null(v)) {
+          vertex.frame.color <- vertex.frame.color[v]
+     }
+     vertex.size        <- 1/200 * params("vertex", "size")
+     if (length(vertex.size) != 1 && !is.null(v)) {
+          vertex.size <- vertex.size[v]
+     }
+     vertex.size <- rep(vertex.size, length=nrow(coords))
+     
+     symbols(x=coords[,1], y=coords[,2], bg=vertex.color, fg=vertex.frame.color,
+             circles=vertex.size, add=TRUE, inches=FALSE)
+}
+
+.igraph.shape.square.clip <- function(coords, el, params,
+                                      end=c("both", "from", "to")) {
+     end <- match.arg(end)
+     
+     if (length(coords)==0) { return (coords) }     
+     
+     vertex.size <- 1/200 * params("vertex", "size")
+     
+     square.shift <- function(x0, y0, x1, y1, vsize) {
+          m <- (y0-y1)/(x0-x1)
+          l <- cbind(x1-vsize/m , y1-vsize,
+                     x1-vsize , y1-vsize*m,
+                     x1+vsize/m, y1+vsize,
+                     x1+vsize , y1+vsize*m )
+          
+          v <- cbind(x1-vsize <= l[,1] & l[,1] <= x1+vsize &
+                          y1-vsize <= l[,2] & l[,2] <= y1+vsize,
+                     x1-vsize <= l[,3] & l[,3] <= x1+vsize &
+                          y1-vsize <= l[,4] & l[,4] <= y1+vsize,
+                     x1-vsize <= l[,5] & l[,5] <= x1+vsize &
+                          y1-vsize <= l[,6] & l[,6] <= y1+vsize,
+                     x1-vsize <= l[,7] & l[,7] <= x1+vsize &
+                          y1-vsize <= l[,8] & l[,8] <= y1+vsize)
+          
+          d <- cbind((l[,1]-x0)^2 + (l[,2]-y0)^2,
+                     (l[,3]-x0)^2 + (l[,4]-y0)^2,
+                     (l[,5]-x0)^2 + (l[,6]-y0)^2,
+                     (l[,7]-x0)^2 + (l[,8]-y0)^2)
+          
+          t(sapply(seq(length=nrow(l)), function(x) {
+               d[x,][!v[x,]] <- Inf
+               m <- which.min(d[x,])
+               l[x, c(m*2-1, m*2)]
+          }))
+     }
+     
+     if (end %in% c("from", "both")) {
+          vsize <- if (length(vertex.size)==1) {
+               vertex.size
+          } else {
+               vertex.size[ el[,1] ]
+          }
+          res <- res1 <- square.shift(coords[,3], coords[,4], coords[,1], coords[,2],
+                                      vsize)
+     }
+     if (end %in% c("to", "both")) {
+          vsize <- if (length(vertex.size)==1) {
+               vertex.size
+          } else {
+               vertex.size[ el[,2] ]
+          }
+          res <- res2 <- square.shift(coords[,1], coords[,2], coords[,3], coords[,4],
+                                      vsize)
+     }
+     if (end=="both") {
+          res <- cbind(res1, res2)
+     }
+     
+     res
+}
+
+#' @importFrom graphics symbols
+
+.igraph.shape.square.plot <- function(coords, v=NULL, params) {
+     
+     vertex.color       <- params("vertex", "color")
+     if (length(vertex.color) != 1 && !is.null(v)) {
+          vertex.color <- vertex.color[v]
+     }
+     vertex.frame.color <- params("vertex", "frame.color")
+     if (length(vertex.frame.color) != 1 && !is.null(v)) {
+          vertex.frame.color <- vertex.frame.color[v]
+     }
+     vertex.size        <- 1/200 * params("vertex", "size")
+     if (length(vertex.size) != 1 && !is.null(v)) {
+          vertex.size <- vertex.size[v]
+     }
+     vertex.size <- rep(vertex.size, length=nrow(coords))
+     
+     symbols(x=coords[,1], y=coords[,2], bg=vertex.color, fg=vertex.frame.color,
+             squares=2*vertex.size, add=TRUE, inches=FALSE)
+}  
+
+.igraph.shape.csquare.clip <- function(coords, el, params,
+                                       end=c("both", "from", "to")) {
+     
+     end <- match.arg(end)
+     
+     if (length(coords)==0) { return (coords) }     
+     
+     vertex.size <- 1/200 * params("vertex", "size")
+     
+     square.shift <- function(x0, y0, x1, y1, vsize) {
+          
+          l <- cbind(x1,       y1-vsize,
+                     x1-vsize, y1,
+                     x1,       y1+vsize,
+                     x1+vsize, y1)
+          
+          d <- cbind((l[,1]-x0)^2 + (l[,2]-y0)^2,
+                     (l[,3]-x0)^2 + (l[,4]-y0)^2,
+                     (l[,5]-x0)^2 + (l[,6]-y0)^2,
+                     (l[,7]-x0)^2 + (l[,8]-y0)^2)
+          
+          t(sapply(seq(length=nrow(l)), function(x) {
+               m <- which.min(d[x,])
+               l[x, c(m*2-1, m*2)]
+          }))
+     }
+     
+     if (end %in% c("from", "both")) {
+          vsize <- if (length(vertex.size)==1) {
+               vertex.size
+          } else {
+               vertex.size[ el[,1] ]
+          }
+          res <- res1 <- square.shift(coords[,3], coords[,4], coords[,1], coords[,2],
+                                      vsize)
+     }
+     if (end %in% c("to", "both")) {
+          vsize <- if (length(vertex.size)==1) {
+               vertex.size
+          } else {
+               vertex.size[ el[,2] ]
+          }
+          res <- res2 <- square.shift(coords[,1], coords[,2], coords[,3], coords[,4],
+                                      vsize)
+     }
+     if (end=="both") {
+          res <- cbind(res1, res2)
+     }
+     
+     res
+}
+
+.igraph.shape.csquare.plot <- .igraph.shape.square.plot
+
+.igraph.shape.rectangle.clip <- function(coords, el, params,
+                                         end=c("both", "from", "to")) {
+     
+     end <- match.arg(end)
+     
+     if (length(coords)==0) { return (coords) }     
+     
+     vertex.size <- 1/200 * params("vertex", "size")
+     vertex.size2 <- 1/200 * params("vertex", "size2")
+     
+     rec.shift <- function(x0, y0, x1, y1, vsize, vsize2) {
+          m <- (y0-y1)/(x0-x1)
+          l <- cbind(x1-vsize/m,  y1-vsize2,
+                     x1-vsize,    y1-vsize*m,
+                     x1+vsize2/m, y1+vsize2,
+                     x1+vsize,    y1+vsize*m )
+          
+          v <- cbind(x1-vsize <= l[,1] & l[,1] <= x1+vsize &
+                          y1-vsize2 <= l[,2] & l[,2] <= y1+vsize2,
+                     x1-vsize <= l[,3] & l[,3] <= x1+vsize &
+                          y1-vsize2 <= l[,4] & l[,4] <= y1+vsize2,
+                     x1-vsize <= l[,5] & l[,5] <= x1+vsize &
+                          y1-vsize2 <= l[,6] & l[,6] <= y1+vsize2,
+                     x1-vsize <= l[,7] & l[,7] <= x1+vsize &
+                          y1-vsize2 <= l[,8] & l[,8] <= y1+vsize2)
+          
+          d <- cbind((l[,1]-x0)^2 + (l[,2]-y0)^2,
+                     (l[,3]-x0)^2 + (l[,4]-y0)^2,
+                     (l[,5]-x0)^2 + (l[,6]-y0)^2,
+                     (l[,7]-x0)^2 + (l[,8]-y0)^2)
+          
+          t(sapply(seq(length=nrow(l)), function(x) {
+               d[x,][!v[x,]] <- Inf
+               m <- which.min(d[x,])
+               l[x, c(m*2-1, m*2)]
+          }))
+     }
+     
+     if (end %in% c("from", "both")) {
+          vsize <- if (length(vertex.size)==1) {
+               vertex.size
+          } else {
+               vertex.size[ el[,1] ]
+          }
+          vsize2 <- if (length(vertex.size2)==1) {
+               vertex.size2
+          } else {
+               vertex.size2[ el[,1] ]
+          }
+          res <- res1 <- rec.shift(coords[,3], coords[,4], coords[,1], coords[,2],
+                                   vsize, vsize2)
+     }
+     if (end %in% c("to", "both")) {
+          vsize <- if (length(vertex.size)==1) {
+               vertex.size
+          } else {
+               vertex.size[ el[,2] ]
+          }
+          vsize2 <- if (length(vertex.size2)==1) {
+               vertex.size2
+          } else {
+               vertex.size2[ el[,2] ]
+          }
+          res <- res2 <- rec.shift(coords[,1], coords[,2], coords[,3], coords[,4],
+                                   vsize, vsize2)
+     }
+     if (end=="both") {
+          res <- cbind(res1, res2)
+     }
+     
+     res
+}
+
+#' @importFrom graphics symbols
+
+.igraph.shape.rectangle.plot <- function(coords, v=NULL, params) {
+     
+     vertex.color       <- params("vertex", "color")
+     if (length(vertex.color) != 1 && !is.null(v)) {
+          vertex.color <- vertex.color[v]
+     }
+     vertex.frame.color <- params("vertex", "frame.color")
+     if (length(vertex.frame.color) != 1 && !is.null(v)) {
+          vertex.frame.color <- vertex.frame.color[v]
+     }
+     vertex.size        <- 1/200 * params("vertex", "size")
+     if (length(vertex.size) != 1 && !is.null(v)) {
+          vertex.size <- vertex.size[v]
+     }
+     vertex.size <- rep(vertex.size, length=nrow(coords))   
+     vertex.size2       <- 1/200 * params("vertex", "size2")
+     if (length(vertex.size2) != 1 && !is.null(v)) {
+          vertex.size2 <- vertex.size2[v]
+     }
+     vertex.size <- cbind(vertex.size, vertex.size2)
+     
+     symbols(x=coords[,1], y=coords[,2], bg=vertex.color, fg=vertex.frame.color,
+             rectangles=2*vertex.size, add=TRUE, inches=FALSE)
+}
+
+.igraph.shape.crectangle.clip <- function(coords, el, params,
+                                          end=c("both", "from", "to")) {
+     
+     end <- match.arg(end)
+     
+     if (length(coords)==0) { return (coords) }     
+     
+     vertex.size <- 1/200 * params("vertex", "size")
+     vertex.size2 <- 1/200 * params("vertex", "size2")
+     
+     rec.shift <- function(x0, y0, x1, y1, vsize, vsize2) {
+          
+          l <- cbind(x1,       y1-vsize2,
+                     x1-vsize, y1,
+                     x1,       y1+vsize2,
+                     x1+vsize, y1)
+          
+          d <- cbind((l[,1]-x0)^2 + (l[,2]-y0)^2,
+                     (l[,3]-x0)^2 + (l[,4]-y0)^2,
+                     (l[,5]-x0)^2 + (l[,6]-y0)^2,
+                     (l[,7]-x0)^2 + (l[,8]-y0)^2)
+          
+          t(sapply(seq(length=nrow(l)), function(x) {
+               m <- which.min(d[x,])
+               l[x, c(m*2-1, m*2)]
+          }))
+     }
+     
+     if (end %in% c("from", "both")) {
+          vsize <- if (length(vertex.size)==1) {
+               vertex.size
+          } else {
+               vertex.size[ el[,1] ]
+          }
+          vsize2 <- if (length(vertex.size2)==1) {
+               vertex.size2
+          } else {
+               vertex.size2[ el[,1] ]
+          }
+          res <- res1 <- rec.shift(coords[,3], coords[,4], coords[,1], coords[,2],
+                                   vsize, vsize2)
+     }
+     if (end %in% c("to", "both")) {
+          vsize <- if (length(vertex.size)==1) {
+               vertex.size
+          } else {
+               vertex.size[ el[,2] ]
+          }
+          vsize2 <- if (length(vertex.size2)==1) {
+               vertex.size2
+          } else {
+               vertex.size2[ el[,2] ]
+          }
+          res <- res2 <- rec.shift(coords[,1], coords[,2], coords[,3], coords[,4],
+                                   vsize, vsize2)
+     }
+     if (end=="both") {
+          res <- cbind(res1, res2)
+     }
+     
+     res
+}
+
+.igraph.shape.crectangle.plot <- .igraph.shape.rectangle.plot
+
+.igraph.shape.vrectangle.clip <- function(coords, el, params,
+                                          end=c("both", "from", "to")) {
+     
+     end <- match.arg(end)
+     
+     if (length(coords)==0) { return (coords) }     
+     
+     vertex.size <- 1/200 * params("vertex", "size")
+     vertex.size2 <- 1/200 * params("vertex", "size2")
+     
+     rec.shift <- function(x0, y0, x1, y1, vsize, vsize2) {
+          
+          l <- cbind(x1-vsize, y1, x1+vsize, y1)
+          
+          d <- cbind((l[,1]-x0)^2 + (l[,2]-y0)^2,
+                     (l[,3]-x0)^2 + (l[,4]-y0)^2)
+          
+          t(sapply(seq(length=nrow(l)), function(x) {
+               m <- which.min(d[x,])
+               l[x, c(m*2-1, m*2)]
+          }))
+     }
+     
+     if (end %in% c("from", "both")) {
+          vsize <- if (length(vertex.size)==1) {
+               vertex.size
+          } else {
+               vertex.size[ el[,1] ]
+          }
+          vsize2 <- if (length(vertex.size2)==1) {
+               vertex.size2
+          } else {
+               vertex.size2[ el[,1] ]
+          }
+          res <- res1 <- rec.shift(coords[,3], coords[,4], coords[,1], coords[,2],
+                                   vsize, vsize2)
+     }
+     if (end %in% c("to", "both")) {
+          vsize <- if (length(vertex.size)==1) {
+               vertex.size
+          } else {
+               vertex.size[ el[,2] ]
+          }
+          vsize2 <- if (length(vertex.size2)==1) {
+               vertex.size2
+          } else {
+               vertex.size2[ el[,2] ]
+          }
+          res <- res2 <- rec.shift(coords[,1], coords[,2], coords[,3], coords[,4],
+                                   vsize, vsize2)
+     }
+     if (end=="both") {
+          res <- cbind(res1, res2)
+     }
+     
+     res
+}    
+
+.igraph.shape.vrectangle.plot <- .igraph.shape.rectangle.plot
+
+.igraph.shape.none.clip <- .igraph.shape.circle.clip
+
+.igraph.shape.none.plot <- function(coords, v=NULL, params) {
+     ## does not plot anything at all
+     invisible(NULL)
+}
+
+#' @importFrom graphics par polygon
+
+mypie <- function(x, y, values, radius, edges=200, col=NULL, angle=45,
+                  density=NULL, border=NULL, lty=NULL, init.angle=90, ...) {
+     values <- c(0, cumsum(values)/sum(values))
+     dx <- diff(values)
+     nx <- length(dx)
+     twopi <- 2 * pi
+     if (is.null(col)) 
+          col <- if (is.null(density)) 
+               c("white", "lightblue", "mistyrose", "lightcyan", 
+                 "lavender", "cornsilk")
+     else par("fg")
+     col <- rep(col, length.out = nx)
+     border <- rep(border, length.out = nx)
+     lty <- rep(lty, length.out = nx)
+     angle <- rep(angle, length.out = nx)
+     density <- rep(density, length.out = nx)
+     t2xy <- function(t) {
+          t2p <- twopi * t + init.angle * pi/180
+          list(x = radius * cos(t2p), y = radius * sin(t2p))
+     }
+     for (i in 1:nx) {
+          n <- max(2, floor(edges * dx[i]))
+          P <- t2xy(seq.int(values[i], values[i + 1], length.out = n))
+          polygon(x+c(P$x, 0), y+c(P$y, 0), density = density[i], angle = angle[i], 
+                  border = border[i], col = col[i], lty = lty[i], ...)
+     }
+}
+
+.igraph.shape.pie.clip <- function(coords, el, params,
+                                   end=c("both", "from", "to")) {
+     
+     end <- match.arg(end)
+     
+     if (length(coords)==0) { return (coords) }     
+     
+     vertex.size <- 1/200 * params("vertex", "size")
+     
+     if (end=="from") {
+          phi <- atan2(coords[,4] - coords[,2], coords[,3] - coords[,1])
+          vsize.from <- if (length(vertex.size)==1) {
+               vertex.size
+          } else {
+               vertex.size[ el[,1] ]
+          }
+          res <- cbind(coords[,1] + vsize.from*cos(phi),
+                       coords[,2] + vsize.from*sin(phi) )
+     } else if (end=="to") {
+          phi <- atan2(coords[,4] - coords[,2], coords[,3] - coords[,1])
+          r <- sqrt( (coords[,3] - coords[,1])^2 + (coords[,4] - coords[,2])^2 )
+          vsize.to <- if (length(vertex.size)==1) {
+               vertex.size
+          } else {
+               vertex.size[ el[,2] ]
+          }
+          res <- cbind(coords[,1] + (r-vsize.to)*cos(phi),
+                       coords[,2] + (r-vsize.to)*sin(phi) )
+     } else if (end=="both") {
+          phi <- atan2(coords[,4] - coords[,2], coords[,3] - coords[,1])
+          r <- sqrt( (coords[,3] - coords[,1])^2 + (coords[,4] - coords[,2])^2 )
+          vsize.from <- if (length(vertex.size)==1) {
+               vertex.size
+          } else {
+               vertex.size[ el[,1] ]
+          }
+          vsize.to <- if (length(vertex.size)==1) {
+               vertex.size
+          } else {
+               vertex.size[ el[,2] ]
+          }
+          res <- cbind(coords[,1] + vsize.from*cos(phi),
+                       coords[,2] + vsize.from*sin(phi),
+                       coords[,1] + (r-vsize.to)*cos(phi),
+                       coords[,2] + (r-vsize.to)*sin(phi) )
+     }
+     
+     res
+}
+
+#' @importFrom stats na.omit
+
+.igraph.shape.pie.plot <- function(coords, v=NULL, params) {
+     
+     getparam <- function(pname) {
+          p <- params("vertex", pname)
+          if (length(p) != 1 && !is.null(v)) {
+               p <- p[v]
+          }
+          p
+     }
+     vertex.color       <- getparam("color")
+     vertex.frame.color <- getparam("frame.color")
+     vertex.size        <- rep(1/200 * getparam("size"), length=nrow(coords))
+     vertex.pie         <- getparam("pie")
+     vertex.pie.color   <- getparam("pie.color")
+     vertex.pie.angle   <- getparam("pie.angle")
+     vertex.pie.density <- getparam("pie.density")
+     vertex.pie.lty     <- getparam("pie.lty")
+     
+     for (i in seq_len(nrow(coords))) {
+          pie <- if(length(vertex.pie)==1) {
+               vertex.pie[[1]]
+          } else {
+               vertex.pie[[i]]
+          }
+          col <- if (length(vertex.pie.color)==1) {
+               vertex.pie.color[[1]]
+          } else {
+               vertex.pie.color[[i]]
+          }
+          mypie(x=coords[i,1], y=coords[i,2], pie,
+                radius=vertex.size[i], edges=200, col=col,
+                angle=na.omit(vertex.pie.angle[c(i,1)])[1],
+                density=na.omit(vertex.pie.density[c(i,1)])[1],
+                border=na.omit(vertex.frame.color[c(i,1)])[1],
+                lty=na.omit(vertex.pie.lty[c(i,1)])[1])
+     }
+}
+
+.igraph.shape.sphere.clip <- .igraph.shape.circle.clip
+
+#' @importFrom graphics rasterImage
+#' @importFrom grDevices col2rgb as.raster
+
+.igraph.shape.sphere.plot <- function(coords, v=NULL, params) {
+     
+     getparam <- function(pname) {
+          p <- params("vertex", pname)
+          if (length(p) != 1 && !is.null(v)) {
+               p <- p[v]
+          }
+          p
+     }
+     vertex.color       <- rep(getparam("color"), length=nrow(coords))
+     vertex.size        <- rep(1/200 * getparam("size"), length=nrow(coords))
+     
+     ## Need to create a separate image for every different vertex color
+     allcols <- unique(vertex.color)
+     images <- lapply(allcols, function(col) {
+          img <- .Call(C_R_igraph_getsphere, pos=c(0.0,0.0,10.0), radius=7.0,
+                       color=col2rgb(col)/255, bgcolor=c(0,0,0),
+                       lightpos=list(c(-2,2,2)), lightcolor=list(c(1,1,1)),
+                       width=100L, height=100L)
+          as.raster(img)
+     })
+     whichImage <- match(vertex.color, allcols)  
+     
+     for (i in seq_len(nrow(coords))) {
+          vsp2 <- vertex.size[i]
+          rasterImage(images[[ whichImage[i] ]],
+                      coords[i,1]-vsp2, coords[i,2]-vsp2,
+                      coords[i,1]+vsp2, coords[i,2]+vsp2)
+     }
+}
+
+.igraph.shape.raster.clip <- .igraph.shape.rectangle.clip
+
+#' @importFrom graphics rasterImage
+
+.igraph.shape.raster.plot <- function(coords, v=NULL, params) {
+     
+     getparam <- function(pname) {
+          p <- params("vertex", pname)
+          if (is.list(p) && length(p) != 1 && !is.null(v)) {
+               p <- p[v]
+          }
+          p
+     }
+     
+     size   <- rep(1/200 * getparam("size"), length=nrow(coords))
+     size2  <- rep(1/200 * getparam("size2"), length=nrow(coords))
+     raster <- getparam("raster")
+     
+     for (i in seq_len(nrow(coords))) {
+          ras <- if (!is.list(raster) || length(raster)==1) raster else raster[[i]]
+          rasterImage(ras, coords[i,1]-size[i], coords[i,2]-size2[i],
+                      coords[i,1]+size[i], coords[i,2]+size2[i])
+     }
+}
+
+.igraph.shapes <- new.env()
+.igraph.shapes[["circle"]] <- list(clip=.igraph.shape.circle.clip,
+                                   plot=.igraph.shape.circle.plot)
+.igraph.shapes[["square"]] <- list(clip=.igraph.shape.square.clip,
+                                   plot=.igraph.shape.square.plot)
+.igraph.shapes[["csquare"]] <- list(clip=.igraph.shape.csquare.clip,
+                                    plot=.igraph.shape.csquare.plot)
+.igraph.shapes[["rectangle"]] <- list(clip=.igraph.shape.rectangle.clip,
+                                      plot=.igraph.shape.rectangle.plot)
+.igraph.shapes[["crectangle"]] <- list(clip=.igraph.shape.crectangle.clip,
+                                       plot=.igraph.shape.crectangle.plot)
+.igraph.shapes[["vrectangle"]] <- list(clip=.igraph.shape.vrectangle.clip,
+                                       plot=.igraph.shape.vrectangle.plot)
+.igraph.shapes[["none"]] <- list(clip=.igraph.shape.none.clip,
+                                 plot=.igraph.shape.none.plot)
+.igraph.shapes[["pie"]] <- list(clip=.igraph.shape.pie.clip,
+                                plot=.igraph.shape.pie.plot)
+.igraph.shapes[["sphere"]] <- list(clip=.igraph.shape.sphere.clip,
+                                   plot=.igraph.shape.sphere.plot)
+.igraph.shapes[["raster"]] <- list(clip=.igraph.shape.raster.clip,
+                                   plot=.igraph.shape.raster.plot)
 

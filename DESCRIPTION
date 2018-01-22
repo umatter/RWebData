@@ -16,7 +16,7 @@ Imports:
     yaml,
     RJSONIO,
     methods
-Version: 0.2
+Version: 0.2.1
 Author: Ulrich Matter
 Maintainer: Ulrich Matter <ulrich.matter@unibas.ch>
 Description: RWebAPI provides various high- and low-level functions to write
@@ -24,3 +24,42 @@ Description: RWebAPI provides various high- and low-level functions to write
     APIs, and extract data from various web data formats as data frames.
 License: GPL-2, GPL-3
 RoxygenNote: 6.0.1
+Collate: 
+    'JSONtoDataFrame.R'
+    'XMLtoDataFrame.R'
+    'YAMLtoDataFrame.R'
+    'alignAllVariables.R'
+    'alignVariables.R'
+    'apiData.R'
+    'apiDatalight.R'
+    'apiDownload.R'
+    'apiGET.R'
+    'apiRequestFunction.R'
+    'apiresponseOK.R'
+    'changeNullToNA.R'
+    'content2list.R'
+    'dfList.R'
+    'entityCheck.R'
+    'entityTypeCheck.R'
+    'entityTypeCheckWide.R'
+    'extractEntityTypes.R'
+    'flattenTree.R'
+    'generateQueryFunction.R'
+    'getTabularData.R'
+    'getdata.R'
+    'is.apidata.R'
+    'is.apirequest.R'
+    'is.apiresponse.R'
+    'listToDataFrame.R'
+    'mapiDatalight.R'
+    'rbindEntities.R'
+    'redlist.R'
+    'reduceNestingStructure.R'
+    'rwa_classes.R'
+    'rwa_methods.R'
+    'rwa_utils.R'
+    'saveAPIkey.R'
+    'saveDL.R'
+    'stackEntites.R'
+    'stackEntityTypes.R'
+    'treeStructureDF.R'
