@@ -83,7 +83,10 @@ cbindFill <-
     
     for ( i in names(df2)) {
       
-      df1[,i] <- df2[,i]
+      if (1<nrow(df1)) {
+            df1[,i] <- df2[,i] 
+      }
+
       
     }
     
