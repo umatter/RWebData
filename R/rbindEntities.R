@@ -113,7 +113,13 @@ rbindEntities <-
                               stackedEntitiesSep[[i]] <- rbind.fill(sepRows)
                         }
                         
-                        stackedEntities <- do.call("merge", stackedEntitiesSep)
+                        stackedEntities <- try(do.call("merge", stackedEntitiesSep), silent = TRUE)
+                        if (class(stackedEntities)[1]=="try-error") {
+                              stackedEntitiesSep <- lapply(stackedEntitiesSep, unique)
+                              stackedEntitiesSep[sapply(stackedEntitiesSep, is.null)] <- NULL
+                              stackedEntities <- do.call("cbind", stackedEntitiesSep)
+                        }
+                        
                   }
             
             }

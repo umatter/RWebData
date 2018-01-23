@@ -1080,7 +1080,7 @@ url2apirequest <-
     
     p.url <- parse_url(url)
     
-    if (!is.null(p.url$query)) {# url contains query parameters?
+    if (!is.null(p.url$query) & 0 < length(p.url$query)) {# url contains query parameters?
       
       q <- p.url$query
       rarg <- data.frame(t(unlist(q)))
