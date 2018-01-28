@@ -22,7 +22,8 @@ Maintainer: Ulrich Matter <ulrich.matter@unibas.ch>
 Description: RWebAPI provides various high- and low-level functions to write
     open source interfaces to RESTful web APIs, interactively download data from web
     APIs, and extract data from various web data formats as data frames.
-License: GPL-2, GPL-3
+License: GPL-2
+         GPL-3
 RoxygenNote: 6.0.1
 Collate: 
     'JSONtoDataFrame.R'
