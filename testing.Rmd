@@ -133,11 +133,12 @@ for (i in example_urls) {
 Unit test summary
 ===================
 
-```{r echo=FALSE, purl=FALSE  }
+```{r echo=FALSE, }
+library(testthat)
 library(knitr)
 # run all unit tests at once
 results <- test_file("unit_testing.R")
-kable(results)
+kable(as.data.frame(results))
 ```
 
 
